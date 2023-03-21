@@ -1,0 +1,210 @@
+﻿@inject IStore store
+@inject HttpClient httpClient
+@inject IOrderController orderController
+@inject IUserController userController
+@inject IMailService mailService
+@inject IProductController productController
+@inject NavigationManager navigationManager
+
+@if (store.State().Cart.Items.Count > 0)
+          {
+           <div>
+            @foreach (var item in store.State().Cart.Items)
+            {
+                <div class="box">
+                        <i @onclick="(() => store.RemoveFromCart(item))" class="fas fa-trash"></i>
+                        <div class="img">
+                            <img src="@item.Filepath" alt="cart">
+                        </div>
+                        <div class="content">
+                            <h3>@item.Name</h3>
+                            <span class="price item">@naira @(item.Price * item.Quantity)</span>
+                            <span class="quantity item">qty: @item.Quantity</span>
+                            <div class="symbols" @onclick="(() => store.ComputeCartTotal())">
+                                <span @onclick="(() => {item.Quantity++;})">&and;</span>
+                                @if (item.Quantity > 1)
+                                {
+                                  <span @onclick="(() => {item.Quantity--;})">&or;</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+       }
+             <div class="total">total : @naira @store.State().CartTotal.Total</div>
+             <div>
+                <div class="error"> @message</div>
+                @if (!string.IsNullOrEmpty(store.State().ActiveUser.User.Email))
+                {
+                    <input type="email" disabled  value="@store.State().ActiveUser.User.Email" placeholder="Enter your email address" class="box">
+                }
+                else
+                {
+                   <input type="email" @onblur="(() => IsValidEmail(email))" @bind="email" placeholder="Enter your email address" class="box">
+                }
+                 <input type="tel" @bind="mobile" placeholder="Enter valid mobile number" class="box">
+             </div>
+            @if (store.State().PaystackAuthUrl.AuthKeyVal.Key)
+            {
+                <div class="coloured">
+                    <a href="@store.State().PaystackAuthUrl.AuthKeyVal.Value" class="btn">Pay @naira @store.State().CartTotal.Total</a>
+                </div>
+            }
+            else
+            {
+                if (msg!= "")
+                {
+                    <small class="error">@msg</small>
+                }
+                <a href="" @onclick="Checkout" class="btn">check out</a>
+            }
+    </div>
+}
+else
+{
+    <div>
+        <p>Empty Cart</p>
+    </div>
+}
+
+@code {
+    char naira = (char)8358;
+    string email = "";
+    string mobile = "";
+    string message = "";
+    string msg = "";
+    string domainName = "";
+    bool isEmailValid = false;
+    List<User> users = new();
+    public string data { get; set; } = string.Empty;
+    string paystack_public_key = "";//"pk_test_89afab3000854e4e6ec835bf2f93c186403954ba";
+    string paystack_secret_key = "";//"sk_test_f2fe38be54d1f55fd08bedc1d8b4a218b11f13d4";
+    protected override async Task OnInitializedAsync()
+    {
+        users = await userController.ReadAllUsers();
+        var uri = new Uri(navigationManager.Uri);
+        domainName = uri.Host;
+        GetPaystackKeys();
+        store.AddStateChangedListeners(() => { StateHasChanged(); });
+    }
+    public void Dispose()
+    {
+        store.RemoveStateChangedListeners(() => { StateHasChanged(); });
+    }
+    private async void GetPaystackKeys()
+    {
+        var dict = await productController.GetPaystackKeys();
+        if (dict != null  && dict.Count > 0)
+        {
+            paystack_public_key = dict["public"];
+            paystack_secret_key = dict["secret"];
+        }
+    }
+    private bool isMobileValid()
+    {
+        if (!string.IsNullOrEmpty(mobile))
+        {
+            //string pattern = @"^\+(?:\d{1,3})?\d{10}$";
+            string pattern = @"^(?:\+?\d{1,3})?(?:0|\d{1,4})\d{10}$";//@"^(?:\+?\d{1,3})?\d{10}$";
+            Regex regex = new Regex(pattern);
+            return regex.IsMatch(mobile);
+        }
+        return false;
+    }
+    private bool IsValidEmail(string email)
+    {
+        string pattern = @"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,3})+)$";
+        Regex regex = new Regex(pattern);
+        this.isEmailValid = regex.IsMatch(email);
+        if (this.isEmailValid)
+        {
+            this.message = string.Empty;
+        }
+        else
+        {
+            this.message = "email field is invalid, email must be in the form abc@xyz.com";
+        }
+        return regex.IsMatch(email);
+    }
+    private async Task SendMail(string customerEmail, string reference)
+    {
+        string mailBody = $"<p>Your order with PayStack's reference Id {reference} is well received. THANK YOU!!! for keeping us in business. </p><p>Click <a href=\"https://{domainName}\">{domainName}</a> We hope you'd keep patronizing us.</p>";
+        if (users.Count > 0)
+        {
+            foreach (var user in users)
+            {
+                if (user.IsAdmin || user.AllowAcess)
+                {
+                    var mail = user.Email;
+                    string body = $"<p>You have a new order placed by {customerEmail} with PayStack's reference Id {reference} in your E-commerce domain. Please do well to check and validate the transaction and do the needful.</p><p>Click <a href=\"https://{domainName}\">{domainName}</a> to access your E-commerce domain.</p>";
+                    await mailService.Send("peters.soft.network@gmail.com", mail, "New Order received at " + domainName, body);
+                }
+            }
+        }
+        await mailService.Send("peters.soft.network@gmail.com", customerEmail, "New Order received at " + domainName, mailBody);
+    }
+    private async void Checkout()
+    {
+        if ((!string.IsNullOrEmpty(store.State().ActiveUser.User.Email)))
+        {
+            email = store.State().ActiveUser.User.Email;
+            isEmailValid = true; 
+        }
+        if (!string.IsNullOrEmpty(email) && isMobileValid() && isEmailValid)
+        {
+            msg = "please wait while we authenticate payment channel ...";
+            message = "";
+            var _data = new PaystackData()
+                {
+                    amount = store.State().CartTotal.Total * 100, //in kobo
+                    email = email,
+                    key = paystack_public_key
+                };
+            data = JsonConvert.SerializeObject(_data);
+
+
+            // Send POST request to Paystack API with data and header// https://api.paystack.co/transaction/initialize
+            string paystackAuthorizationUrl = string.Empty;
+            bool isSuccess = false;
+            using (var request = new HttpRequestMessage(HttpMethod.Post, "https://api.paystack.co/transaction/initialize"))
+            {
+                request.Headers.Add("Authorization", $"Bearer {paystack_secret_key}");
+                var content = new StringContent(data, Encoding.UTF8, "application/json");
+                request.Content = content;
+
+                var response = await httpClient.SendAsync(request);
+                isSuccess = response.IsSuccessStatusCode;
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseContent = await response.Content.ReadAsStringAsync();
+                    if (responseContent != null)
+                    {
+                        dynamic responseObject = JsonConvert.DeserializeObject<dynamic>(responseContent) ?? "";
+                        paystackAuthorizationUrl = responseObject.data.authorization_url;
+                        var order = new Orders()
+                        {
+                            Reference = responseObject.data.reference,
+                            AccessCode = responseObject.data.access_code,
+                            AuthorizationUrl = responseObject.data.authorization_url,
+                            Email = email,
+                            Mobile = mobile,
+                            Products = store.State().Cart.Items.ToList(),
+                            Date = DateTime.Now
+                        };
+                        await orderController.AddPendingOrder(order);
+                        await SendMail(_data.email, order.Reference);
+                    }
+                }
+            }
+            message = string.Empty;
+            store.SetPaystackAuthenticationUrl(isSuccess, paystackAuthorizationUrl);
+            if (isSuccess)
+            {
+                msg = ""; 
+            }
+        }
+        else
+        {
+            message = "email and address fields must not be empty or invalid";
+        }
+    }
+}

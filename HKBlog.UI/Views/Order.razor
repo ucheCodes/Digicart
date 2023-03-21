@@ -1,0 +1,151 @@
+﻿@page "/orders"
+@inject IOrderController orderController
+@inject NavigationManager navigationManager
+@inject HttpClient httpClient
+
+<h1 class="heading">Pending <span>Transactions</span></h1>
+<p class="p">Do well to verify transactions and ensure the verification status is checked <i class="fa-solid fa-check"></i> before delivery to clients</p>
+<div class="table">
+@if(orders.Count  > 0){
+    <table>
+        <thead>
+            <tr>
+                <th>S / N</th>
+                <th>Reference</th>
+                <th>Access Code</th>
+                <th>Email</th>
+                <th>Mobile</th>
+                <th>Is Verified</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>View Product</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{int count = 0;
+            foreach (var order in orders)
+            {
+                <tr>
+                    <td>@count</td>
+                    <td>@order.Reference</td>
+                    <td>@order.AccessCode</td>
+                    <td>@order.Email</td>
+                    <td>@order.Mobile</td>
+                    @if (order.IsValid)
+                    {
+                        <td class="icon"><i class="fa-solid fa-check"></i></td>
+                    }
+                    else
+                    {
+                        <td class="icon"><i class="fa-solid fa-x"></i></td>
+                    }
+                    <td>@order.Date.ToString("ddd, dd MMM yyyy")</td>
+                    <td>@order.Date.ToString("hh : mm : ss tt")</td>
+                    <td class="icon" @onclick="(() => View(order.Reference))"><i class="fa-solid fa-eye"></i></td>
+                    @if (!order.IsValid)
+                    {
+                        <td><button class="btn" @onclick="(() => Verify(order.Reference,order.Date))">Verify Order</button></td>
+                    }
+                    else
+                    {
+                        <td @onclick="(() => ViewVerified(order.Reference))"><p class="p">Click to View Verification</p></td>
+                    }
+                </tr>
+                count++;
+            }
+            }
+        </tbody>
+    </table>
+}
+</div>
+
+
+@code{
+    List<Orders> orders = new List<Orders>();
+    string paystack_secret_key = "sk_test_f2fe38be54d1f55fd08bedc1d8b4a218b11f13d4";
+    protected override async Task OnInitializedAsync()
+    {
+        orders = (await orderController.GetAllOrders()).OrderByDescending(x => x.Date).ToList<Orders>();
+    }
+    private void View(string id)
+    {
+        navigationManager.NavigateTo($"/order-products/{id}");
+    }
+    private void ViewVerified(string reference)
+    {
+        navigationManager.NavigateTo($"/verify/{reference}");
+    }
+    private async void Verify(string reference, DateTime date)
+    {
+        if (!string.IsNullOrEmpty(paystack_secret_key) && !string.IsNullOrEmpty(reference))
+        {
+            using (var request = new HttpRequestMessage(HttpMethod.Get, "https://api.paystack.co/transaction/verify/" + reference))
+            {
+                try
+                {
+                    request.Headers.Add("Authorization", $"Bearer {paystack_secret_key}");
+
+                    var response = await httpClient.SendAsync(request);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        string responseContent = await response.Content.ReadAsStringAsync();
+                        if (responseContent != null)
+                        {
+                            dynamic responseObject = JsonConvert.DeserializeObject<dynamic>(responseContent) ?? "";
+                            var data = responseObject.data;
+                            string cd = data.createdAt;
+                            PaystackTransaction pt = new PaystackTransaction()
+                                {
+                                    Reference = data.reference,
+                                    Amount = data.amount / 100,
+                                    Domain = data.domain,
+                                    Status = data.status,
+                                    Bank = data.authorization.bank,
+                                    Bin = data.authorization.bin,
+                                    CardBrand = data.authorization.brand,
+                                    CardExpiry = $"{data.authorization.exp_month} {data.authorization.exp_year}",
+                                    AccountName = data.authorization.account_name,
+                                    CardLastFourDigits = data.authorization.last4,
+                                    Email = data.customer.email,
+                                    Date = date
+                                   // Date = DateTime.ParseExact(cd, "yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture)
+                                };
+                            var order = orders.Find(x => x.Reference == reference) ?? new Orders();
+                            if (!string.IsNullOrEmpty(order.Reference) && data.status == "success")
+                            {
+                                order.IsValid = true;
+                                var isAdded = await orderController.AddPendingOrder(order);
+                                var addPt = await orderController.AddPaystackTransaction(pt);
+                                if (isAdded)
+                                {
+                                    orders.Add(order);
+                                    navigationManager.NavigateTo($"/verify/{reference}");
+                                }
+                            }
+                            else
+                            {
+                                var ord = orders.FirstOrDefault(x => x.Reference == reference);
+                                if (ord != null && DateTime.Now.Subtract(ord.Date).TotalDays >= 1)
+                                {
+                                    bool isDel = (orderController.DeleteOrder(reference)).Result;
+                                    if (isDel)
+                                    {
+                                        if (orders.Contains(ord))
+                                        {
+                                            orders.Remove(ord);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+
+                }
+            }
+        }
+    }
+
+}

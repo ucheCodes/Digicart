@@ -1,0 +1,276 @@
+﻿@inject IProductController productController
+@inject IStore store
+@inject NavigationManager navigationManager
+@implements IDisposable
+
+@if (store.State().ProductItems.Products.Count == 0)
+{
+    <section class="product">
+        <div class="special">
+            <div class="box">
+                <div>
+                    <h1>Product Name</h1>
+                    <p>
+                        lorem30 kv,,j jhsvbdhfh hfhjfj hfehjh efhkfh jejhfj  ijefu
+                    </p>
+                    <button class="btn">View in Cart</button>
+                </div>
+                <div class="img">
+                    <img src="@Filepath" alt="product-img" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-2">
+                    <div>
+                        <h1>Product Name</h1>
+                        <p>
+                            lorem30 kv,,j jhsvbdhfh hfhjfj hfehjh efhkfh jejhfj  ijefu
+                            jdfhhg sjhsdhfdjfj
+                            @store.State().ProductVal.ProductVal.Name
+                            @store.State().ProductVal.ProductVal.Description
+                            @store.State().ProductVal.ProductVal.Price
+                        </p>
+                        <button class="btn">Shop Now</button>
+                    </div>
+                </div>
+                <div class="col-2">
+
+                </div>
+            </div>
+        </div>
+        <h1 class="heading">All <span>Products</span></h1>
+        <div class="scroller-btns">
+            <span>All</span>
+            <span>Shoes</span>
+            <span class="active">Fashion</span>
+            <span>Others</span>
+            <span>Others2</span>
+            <span>Others3</span>
+            <span>Others4</span>
+            <span>Others5weynosabi</span>
+        </div>
+        <div class="box-container">
+            <div class="box">
+                <div class="icons">
+                    <i class="fas fa-trash"></i>
+                    <i class="fas fa-user"></i>
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="img">
+                    <img src="@Filepath" alt="product-img" />
+                </div>
+                <h3>vegetables</h3>
+                <p>N15,000</p>
+                <button class="btn">Buy Now</button>
+            </div>
+            <div class="box">
+                <div class="img">
+                    <img src="@Filepath" alt="product-img" />
+                </div>
+                <h3>vegetables</h3>
+                <p>N15,000</p>
+                <button class="btn">Buy Now</button>
+            </div>
+            <div class="box">
+                <div class="img">
+                    <img src="@Filepath" alt="product-img" />
+                </div>
+                <h3>vegetables</h3>
+                <p>N15,000</p>
+                <button class="btn">Buy Now</button>
+            </div>
+            <div class="box">
+                <div class="img">
+                    <img src="@Filepath" alt="product-img" />
+                </div>
+                <h3>vegetables</h3>
+                <p>N15,000</p>
+                <button class="btn">Buy Now</button>
+            </div>
+            <div class="box">
+                <div class="img">
+                    <img src="@Filepath" alt="product-img" />
+                </div>
+                <h3>vegetables</h3>
+                <p>N15,000</p>
+                <button class="btn">Buy Now</button>
+            </div>
+        </div>
+    </section>
+}
+else
+{
+    <section class="product">
+        <div class="special">
+            <div class="box">
+                <div class="col-2">
+                    <h1>@special.Name</h1>
+                    <h1>@naira @special.Price</h1>
+                    <p>
+                        @special.Description
+                    </p>
+                    <button @onclick="(() =>ShowAndAddToCart(special))" class="btn">Buy Now</button>
+                </div>
+                <div class="col-2">
+                @if (!string.IsNullOrWhiteSpace(special.Filepath))
+                {
+                    <div class="img">
+                        <img src="@special.Filepath" alt="product">
+                    </div>
+                }
+                else
+                {
+                    <img src="@Filepath" alt="product">
+                }
+                </div>
+            </div>
+        </div>
+        <h1 class="heading">All <span>Products</span></h1>
+        <div class="scroller-btns">
+            <span @onclick="(() => GetCategoryProducts(all))" class="@GetActiveClass(all)">All</span>
+            <span @onclick="(() => GetCategoryProducts(latest))" class="@GetActiveClass(latest)">Latest</span>
+            @foreach (var cat in categories)
+            {
+@*                <span @onclick="@(() => ToggleActiveClass(cat))" class="@GetActiveClass(cat)">@cat</span>*@
+                <span @onclick="(() => GetCategoryProducts(cat))" class="@GetActiveClass(cat)">@cat</span>
+            }
+        </div>
+        <div class="box-container">
+            @foreach (var product in store.State().ProductItems.Products)
+            {
+                <div class="box">
+                    <div class="icons">
+                        @if (!string.IsNullOrEmpty(store.State().ActiveUser.User.Id) && store.State().ActiveUser.User.AllowAcess)
+                        {
+                            <i @onclick="(() => showDel =! showDel)" class="fas fa-trash"></i>
+                           <i @onclick="(() => EditProduct(product))" class="fa-solid fa-pen-to-square"></i>
+                            @if (showDel)
+                            {
+                                <span>Confirm Delete <i @onclick="(() => DeleteProduct(product.Id))" class="fas fa-trash"></i></span>
+                            }
+                        }
+                        <i @onclick="(() =>AddToCart(product))" class="fas fa-shopping-cart"></i>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(product.Filepath))
+                    {
+                        <div @onclick="(() => View(product.Id))" class="img">
+                            <img src="@product.Filepath" alt="product">
+                        </div>
+                        <div>
+                            <small>@product.Date.ToString("ddd, dd MMM yyyy")</small>
+                            <small>@product.Date.ToString("hh : mm : ss tt")</small>
+                        </div>
+                    }
+                    else
+                    {
+                        <img src="@Filepath" alt="product">
+                    }
+                    <h3>@product.Name</h3>
+                    <p>@naira @product.Price</p>
+                    <button @onclick="(() =>ShowAndAddToCart(product))" class="btn">Buy Now</button>
+                </div>
+            }
+        </div>
+    </section>
+}
+
+@code{
+    List<Product> products = new();
+    bool showDel = false;
+    Product special = new();
+    List<string> categories = new();
+    string Filepath = "./img/yellow.jpg";
+    char naira = (char)8358;
+    string all = "all"; 
+    string latest = "latest";
+    private string activeCategory = "all";
+    protected override async Task OnInitializedAsync()
+    {
+        products = await productController.GetProducts();
+        categories = await productController.GetCategories();
+        if (products.Count > 0)
+        {
+            Random rnd = new Random();
+            int num = rnd.Next(0, products.Count);
+            special = products[num];
+            products = (products.OrderByDescending(p => p.Date)).ToList<Product>();
+            store.UpdateProducts(products);
+        }
+
+        store.AddStateChangedListeners(() => { StateHasChanged(); });
+    }
+    private void ToggleActiveClass(string clickedCategory)
+    {
+        if (clickedCategory == activeCategory)
+        {
+            activeCategory = "";
+        }
+        else
+        {
+            activeCategory = clickedCategory;
+        }
+    }
+
+    private string GetActiveClass(string category)
+    {
+        return category == activeCategory ? "active" : "";
+    }
+    private void GetCategoryProducts(string cat)
+    {
+        var _products = new List<Product>();
+        if (cat == "latest")
+        {
+            _products = (products.Where(p => DateTime.Now.Subtract(p.Date).TotalDays <= 7)).ToList<Product>();
+        }
+        else
+        {
+            _products = (products.Where(p => p.Category == cat)).ToList<Product>();
+        }
+
+        if (_products.Count > 0)
+        {
+            store.UpdateProducts(_products);
+        }
+        else
+        {
+            store.UpdateProducts(products);
+        }
+        ToggleActiveClass(cat);
+    }
+    private void View(string id)
+    {
+        navigationManager.NavigateTo($"/view/{id}");
+    }
+    private async void DeleteProduct(string id)
+    {
+        var isDel = await productController.DeleteProduct(id);
+        if (isDel)
+        {
+            // products = (products.Where(p => p.Id != id)).ToList();
+            var prd = products.FirstOrDefault(p => p.Id == id);
+            if (prd != null && prd.Id != "")
+            {
+                products.Remove(prd);
+            }
+            showDel = !showDel;
+        }
+    }
+    private void ShowAndAddToCart(Product product)
+    {
+        store.AddToCart(product);
+        store.ShowCart(true);
+    }
+    private void AddToCart(Product product)
+    {
+        store.AddToCart(product);
+    }
+    private void EditProduct(Product product)
+    {
+        store.ChangeProductVal(product);
+        store.ShowUpload(true);
+    }
+    public void Dispose()
+    {
+        store.RemoveStateChangedListeners(() => { StateHasChanged(); });
+    }
+}
