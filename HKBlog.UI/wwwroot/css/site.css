@@ -18,16 +18,9 @@
     outline: none;
     border: none;
     text-decoration: none;
-    text-transform: capitalize;
+/*    text-transform: capitalize;*/
     transition: all .2s linear;
 }
-/*p {
-    font-size: 1.5rem;
-    color: var(--black);
-    line-height: 1.8;
-    padding: .1rem 0;
-    text-align: center;
-}*/
 .row {
     display: flex;
     align-items: center;
@@ -37,6 +30,9 @@
 .col-2 {
     flex-basis: 50%;
     min-width: 300px;
+}
+.back{
+    margin-top: 1.5rem;
 }
 .center-btn {
     display: block;
@@ -48,22 +44,23 @@
 }
 .error{
     color:red;
+    font-size: 1.3rem;
     font-weight:700;
 }
-.online {
+.online, .log{
     color: green;
     font-size: 10px;
     font-weight: 700;
 }
 .close{
-    font-size:12px;
+    font-size:14px;
     font-weight:bold;
     float: right;
 }
 .close:hover {
     color:red;
     cursor:pointer;
-    font-size: 13px;
+    font-size: 15px;
 }
 .table-img{
     width:35px;
@@ -75,6 +72,15 @@
 }
 .user-info img{
     margin-right:5px;
+}
+.select {
+    width: fit-content;
+    margin: .7rem 0;
+    border-radius: .5rem;
+    padding: 1rem;
+    font-size: 1.6rem;
+    color: var(--black);
+    text-transform: none;
 }
 
 ul {
@@ -281,11 +287,12 @@ h1 {
     display: flex;
     flex-direction: column;
     position: absolute;
-    top:50%;
+    top:40%;
     right:7rem;
 }
 .header .shopping-cart .symbols span {
-    font-size:1.2rem;
+    font-size:1.3rem;
+    font-weight:700;
 }
 .header .shopping-cart .symbols span:hover {
     cursor: pointer;
@@ -318,6 +325,16 @@ h1 {
     display: block;
     text-align: center;
     margin: 1rem;
+}
+.header .shopping-cart .input {
+    width: 100%;
+    margin: .7rem 0;
+    background: var(--background-color);
+    border-radius: .5rem;
+    padding: 1rem;
+    font-size: 1.6rem;
+    color: var(--black);
+    text-transform: none;
 }
 
 #menu-btn {
@@ -433,14 +450,33 @@ h1 {
 }
 .product .related-container {
     display: flex;
-    justify-content: space-evenly;
-    width: 100%;
+    justify-content: space-between;
+    margin: 0 .5rem;
     overflow-x: scroll;
+}
+.rel{
+    margin: 1rem;
+    padding: 1rem;
+    box-shadow: var(--box-shadow);
+    text-align:center;
+    border-radius: 1rem;
+    outline: var(--outline);
+    width:120px;
+}
+.rel p{
+    font-size: 1.1rem;
+}
+.rel h3{
+    margin:.2rem;
+}
+.rel img{
+    width: 100%;
+    height: 100px;
+    padding: .5rem .1rem;
 }
 .product .related-container .box {
     margin: 1rem;
     padding: .5rem;
-    width: 16rem;
 }
 .product .box-container .box {
     padding: 2rem 1rem;
@@ -509,6 +545,9 @@ h1 {
     background: var(--main-color);
     color: var(--white);
 }
+.product .special{
+    margin-top:3rem;
+}
 .product .special .box {
     display: flex;
     align-items: center;
@@ -522,6 +561,7 @@ h1 {
 .product .special .box .img {
     width: 100%;
     height: 28rem;
+    margin-top:1rem;
 }
 
 .product .special .box img {
@@ -536,7 +576,8 @@ h1 {
 }
 /**end of products*/
 
-/*table styles*/
+/* old table styles*/
+/*
 .table {
     background: var(--white);
     box-shadow: var(--box-shadow);
@@ -566,6 +607,8 @@ td {
     font-weight: 400;
     font-size: 1.3rem;
 }
+*/
+/**end of tables*/
 
 .footer {
     box-shadow: var(--box-shadow);
@@ -681,9 +724,6 @@ td {
     section {
         padding: 2rem;
     }
-}
-
-@media (max-width:768px) {
     .header .navbar {
         position: absolute;
         top: 110%;
@@ -698,32 +738,32 @@ td {
         margin: 2rem 2.5rem;
         display: block;
     }
-
-    .header .search-form {
-        width: 90%;
-    }
-
     .navbar.active {
         right: 2rem;
         transition: .5s linear;
     }
-
     #menu-btn {
         display: inline-block;
+    }
+}
+
+@media (max-width:768px) {
+    .header .search-form {
+        width: 90%;
     }
 
     .col-2 {
         min-width: 100%;
     }
 
-    .table th, .table td {
+/*    .table th, .table td {
         display: block;
         width: 100%;
     }
 
     .table tr {
         border-bottom: 1px solid var(--main-color);
-    }
+    }*/
 
     .product .box-container .box .img {
         height: 20rem;
@@ -744,13 +784,30 @@ td {
         width: 10.5rem;
     }
 }
-@media (max-width:400px){
-    .logo{
-        display:none;
+@media (max-width:390px){
+    .logo i{
+      display:none;
     }
 }
-@media (max-width:400px) {
-    .user-info {
+@media (max-width:375px) {
+    .user-info p, .user-info em {
         display: none;
+    }
+}
+@media (max-width:345px) {
+    .logo{
+        display: none;
+    }
+    .header .icon div, .header .icon a {
+        margin-left: 1.5rem;
+    }
+    .user-info img {
+        display: none;
+    }
+}
+@media (max-width:320px) {
+
+    .header .icon div, .header .icon a {
+        margin-left: 1rem;
     }
 }

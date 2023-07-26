@@ -1,14 +1,16 @@
 ﻿@inject IUserController userController
 @inject IStore store
+@inject ProtectedLocalStorage localStorage
 @implements IDisposable
 
 <em class="error">@message</em>
 @if (!isForgottenPassword)
 {
     <EditForm Model="user" OnValidSubmit="Login">
+        <ValidationSummary class="error"></ValidationSummary>
         <h3>Login</h3>
-        <InputText @bind-Value="user.Email" @onblur="(() => IsValidEmail(user.Email))" type="email" placeholder="enter your valid email" class="box"></InputText>
-        <InputText @bind-Value="user.Password" type="password" placeholder="enter strong password" class="box"></InputText>
+        <InputText maxlength="140" @bind-Value="user.Email" @onblur="(() => IsValidEmail(user.Email))" type="email" placeholder="enter your valid email" class="box"></InputText>
+        <InputText maxlength="40" @bind-Value="user.Password" type="password" placeholder="enter strong password" class="box"></InputText>
         <p>forgotten password? <span @onclick="ForgottenPass">click here</span></p>
         <button type="submit" class="btn">Submit</button>
     </EditForm>
@@ -18,8 +20,8 @@ else
     <div>
         <div class="forgotten-pass">
             <p>forgotten password? Enter your registered mail ...</p>
-            <input @bind="forgottenEmail" @onblur="(() => ValidateForgottenEmail(forgottenEmail))" type="email" placeholder="We'll send you a mail" class="box" />
-            <input @bind="forgottenMailOTP" @onblur="(() => CheckOTP(forgottenMailOTP,forgottenEmail))" placeholder="4 - digits Authentication Pin" class="box" />
+            <input maxlength="140" @bind="forgottenEmail" @onblur="(() => ValidateForgottenEmail(forgottenEmail))" type="email" placeholder="We'll send you a mail" class="box" />
+            <input maxlength="4" @bind="forgottenMailOTP" @onblur="(() => CheckOTP(forgottenMailOTP,forgottenEmail))" placeholder="4 - digits Authentication Pin" class="box" />
             <button @onclick="SendForgottenEmail" type="button" class="btn">Submit</button>
         </div>
         <p>back to login form <span @onclick="ForgottenPass">click here</span></p>
@@ -37,6 +39,7 @@ else
 
     protected override void OnInitialized()
     {
+        user = new();
         store.AddStateChangedListeners(() => { StateHasChanged(); });
     }
     public void Dispose()
@@ -49,11 +52,16 @@ else
 
         if (isEmailOTPValid)
         {
-            userController.SendUsersPassword(forgottenEmail);
-            message = "Check your mail for retrieved password!";
+            var isSent = userController.SendUsersPassword(forgottenEmail);
+            if (isSent.Result)
+            {
+                message = "Check your mail for retrieved password! kindly close this dialog.";
+            }
+            else{ message = "Password Retrieval failed. Kindly Try again."; }
             //close form using state manager
-            store.LoginClick(false);
+            //store.LoginClick(false,false);
         }
+        else{ message = "Email or OTP is incorrect. Try Again!!!"; }
     }
     private void ForgottenPass()
     {
@@ -61,14 +69,37 @@ else
     }
     private void Login()
     {
-        if (this.isEmailvalid)
+        if (this.isEmailvalid && user.Password != "")
         {
             var u = user;
             var loggedUser = userController.LoginUser(u.Email, u.Password).Result;
-            
+
             //Add this to state user and close form
-            store.LoginClick(false);
-            store.AddActiveUser(loggedUser);
+            if (loggedUser != null && loggedUser.Id != "")
+            {
+                store.LoginClick(false, false);
+                store.AddActiveUser(loggedUser);
+                SaveUserToCookie(loggedUser.Id);
+            }
+            else
+            {
+                message = "record not found";
+            }
+        }
+        else{ message = "email and password field must be valid"; }
+    }
+    private async void SaveUserToCookie(string userId)
+    {
+        if (!string.IsNullOrEmpty(userId))
+        {
+            try
+            {
+                await localStorage.SetAsync("user", userId);
+            }
+            catch (Exception)
+            {
+                message = "";
+            }
         }
     }
     private void CheckOTP(int otp, string email)
@@ -88,7 +119,11 @@ else
         {
             this.message = "email field is invalid, email must be in the form abc@xyz.com";
         }
-        return regex.IsMatch(email);
+        else
+        {
+            message = "";
+        }
+        return this.isEmailvalid;
     }
     private void ValidateForgottenEmail(string email)
     {

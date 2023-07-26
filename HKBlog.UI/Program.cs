@@ -13,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
+builder.Services.AddScoped<AdsControl>();
 builder.Services.AddScoped<IUserController, UserController>();
 builder.Services.AddScoped<IDatabase, Database>();
 builder.Services.AddScoped<IMailService, MailService>();
@@ -20,6 +21,8 @@ builder.Services.AddScoped<IStore, Store>();
 builder.Services.AddScoped<IProductController, ProductController>();
 builder.Services.AddScoped<IOrderController, OrderController>();
 builder.Services.AddScoped<IMailService, MailService>();
+builder.Services.AddScoped<IReviewController, ReviewController>();
+builder.Services.AddScoped<SignalRService>();
 builder.Services.AddHttpClient();
 
 var builder2 = new ConfigurationBuilder()
@@ -47,7 +50,15 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
+//Addding signalr dependency
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapBlazorHub();
+    endpoints.MapFallbackToPage("/_Host");
+    endpoints.MapHub<AppHub>(AppHub.HubUrl);
+});
+
+//app.MapBlazorHub();
+//app.MapFallbackToPage("/_Host");
 
 app.Run();

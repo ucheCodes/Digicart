@@ -2,12 +2,16 @@
 @inject NavigationManager navigationManager
 @inject IOrderController orderController
 
-<h1 class="heading">Registered <span>Users</span></h1>
-<div class="table">
+<section class="dynamic-table">
+    <div class="table-header">
+        <h1 class="heading">Payment <span>Transaction</span></h1>
+    </div>
+<div class="table scanty">
+    <div class="table-body">
     <table>
         <thead>
             <tr>
-                <th>S / N</th>
+                <th>S/N</th>
                 <th>Ref</th>
                 <th>Bank</th>
                 <th>Card</th>
@@ -38,7 +42,14 @@
                     <td>@pt.Amount</td>
                     <td>@pt.Domain</td>
                     <td>@pt.Email</td>
-                    <td class="icon">@pt.Status <i class="fa-solid fa-check"></i></td>
+                    @if(pt.Status == "success")
+                    {
+                        <td class="icon">@pt.Status <i class="fa-solid fa-check"></i></td>
+                    }
+                    else
+                    {
+                        <td class="icon">@pt.Status<i class="fa-solid fa-x"></i></td>
+                    }
                     <td>@pt.Date.ToString("ddd MMM yyyy")</td>
                     <td>@pt.Date.ToString("hh : mm : ss tt")</td>
                 </tr>
@@ -46,13 +57,13 @@
             }
         </tbody>
     </table>
-
+    </div>
 </div>
 
-<div>
+<div class="back">
     <button @onclick="back" class="center-btn">Back to Orders <i class="fa-sharp fa-solid fa-arrow-right"></i></button>
 </div>
-
+</section>
 @code{
     [Parameter]
     public string reference { get; set; } = "";

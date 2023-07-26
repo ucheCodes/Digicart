@@ -5,19 +5,28 @@
 
 <ProductView/>
 
-<Footer/>
-
 @code {
     protected override void OnInitialized()
     {
-        //string apiKey = configuration.GetSection("ApiKeys")["MyApiKey"];
-
         store.AddStateChangedListeners(() => { StateHasChanged(); });
     }
     public void Dispose()
     {
         store.RemoveStateChangedListeners(() => { StateHasChanged(); });
     }
+     /*
+         * Add more data and ensure counter and ads renders well
+         * give it margin where necessary.
+     * Work on comments reviews with signalr
+     * Create user account system like jumia's
+     * Related product should have section for other variations of the image
+     * Modify the upload section to acommodate multiple files
+     * Then the adds banner can go in between the product and related section
+     * On adds clicked, track and keep record
+     * when users orders, use the record to frequent orders
+     * bring dialog for messages
+     * Confirm from product upload section and be sure users upload image compulsorily
+    */
 }
 
 

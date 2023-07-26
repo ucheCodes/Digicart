@@ -2,14 +2,18 @@
 @inject IOrderController orderController
 @inject NavigationManager navigationManager
 
-<h1 class="heading">Ordered <span>Product</span></h1>
-<div class="table">
+<section class="dynamic-table">
+<div class="table-header">
+    <h1 class="heading">Ordered <span>Product</span></h1>
+</div>
+<div class="table @tableSizeClass">
 @if (order.Products.Count > 0)
 {
+    <div class="table-body">
     <table>
         <thead>
             <tr>
-                <th>S / N</th>
+                <th>S/N</th>
                 <th>Reference</th>
                 <th>Name</th>
                 <th>Price</th>
@@ -28,7 +32,7 @@
                     <td>@ord.Name</td>
                     <td>@ord.Price</td>
                     <td>@ord.Quantity</td>
-                    <td>@order.Date.ToString("ddd MMM yyyy")</td>
+                        <td>@order.Date.ToString("ddd, dd MMM yyyy")</td>
                     <td>@order.Date.ToString("hh : mm : ss tt")</td>
                     <td><img class="table-img" src="@ord.Filepath" alt="@ord.Name" /></td>
                 </tr>
@@ -36,27 +40,38 @@
             }
         </tbody>
     </table>
+    </div>
 }
 else
 {
     <p>No Product found here.</p>
 }
 </div>
-
-<div>
-    <button @onclick="back" class="center-btn">Back to Orders <i class="fa-sharp fa-solid fa-arrow-right"></i></button>
-</div>
+    <div class="back">
+        @if (true)
+        {
+            <button @onclick="back" class="center-btn">Back to Orders <i class="fa-sharp fa-solid fa-arrow-right"></i></button>
+        }
+        else
+        {
+            <a class ="center-btn" href="/">Home <i class="fa-sharp fa-solid fa-arrow-right"></i></a>
+        }
+    </div>
+</section>
 
 @code{
     [Parameter]
     public string Id { get; set; } = "";
     private int count = 0;
+    string tableSizeClass = "scanty";
     Orders order = new Orders();
     protected override async Task OnInitializedAsync()
     {
         if (!string.IsNullOrEmpty(Id))
         {
             order = await orderController.GetOrder(Id);
+            if (order.Products.Count > 4)
+                tableSizeClass = "large";
         }
     }
     private void back() { navigationManager.NavigateTo("/orders"); }

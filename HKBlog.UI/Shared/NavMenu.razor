@@ -1,43 +1,27 @@
 ﻿@inject IStore store
+@inject AdsControl adsControl
+@inject ProtectedLocalStorage localStorage
+@inject IProductController productController
+@inject IUserController uc
+@inject IDatabase database
 @inject NavigationManager navigationManager
 
 <header class="header">
-    @if (!string.IsNullOrEmpty(store.State().ActiveUser.User.Id))
-    {
-        var u = store.State().ActiveUser.User;
-        <div class="user-info">
-            @if (!string.IsNullOrEmpty(u.Filepath))
-            {
-                <img class="table-img" src="@u.Filepath" />
-            }
-            else
-            {
-                <img class="table-img" src="./img/user-2.png" />
-            }
-            <div>
-                @if (@u.Username.ToString().Length > 8)
-                {
-                    <p>@u.Username.ToString().Substring(0,8) ...</p>
-                }
-                else
-                {
-                   <p>@u.Username.ToString().Substring(0,u.Username.Length)</p>
-                }
-                <em class="online">online</em>
-            </div>
-        </div>
-    }
-    else{
-        <span class="logo">Digicart <i class="fas fa-shopping-cart"></i></span>
-    }
+    <span class="logo">@projectName <i class="fas fa-shopping-cart"></i></span>
 
     <nav @onclick="ToggleOff" class="@navbarClass">
-        <NavLink class="nav-link" href="" Match="NavLinkMatch.All"> Home</NavLink>
+        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">Home</NavLink>
+        <NavLink class="nav-link" href="account">Account</NavLink>
+        <NavLink class="nav-link" href="reviews">Reviews</NavLink>
         @if (!string.IsNullOrEmpty(store.State().ActiveUser.User.Id) && store.State().ActiveUser.User.AllowAcess)
         {
             <NavLink class="nav-link" href="users"> Users</NavLink>
             <NavLink class="nav-link" href="" @onclick="logUpload">Upload</NavLink>
             <NavLink class="nav-link" href="orders"> Orders</NavLink>
+            <NavLink class="nav-link" href="manage-ads">Ads</NavLink>
+           <span class="print">
+                <NavLink class="nav-link" href="print">Print</NavLink>
+           </span>
         }
     </nav>
 
@@ -60,7 +44,7 @@
         <SearchForm/>
     </div>
     <div class="@loginFormClass">
-        <div @onclick="(()=> showLoginForm = false)" class="close">x</div>
+        <div @onclick="close" class="close">x</div>
         <LoginForm />
         <p> Already have an account? <span @onclick="ToggleToSignupForm" id="goto-signup">login now</span></p>
     </div>
@@ -80,26 +64,33 @@
 </header>
 
 @code {
+    string projectName = "Shop Now";
     private bool showSearchForm = false;
     private string searchFormClass => showSearchForm ? "search-form active" : "search-form";
 
     private bool showNavbar = false;
     private string navbarClass => showNavbar ? "navbar active" : "navbar";
 
-    private bool showLoginForm = false;
-    private bool showSignupForm = false;
-
-    private string loginFormClass => showLoginForm ? "login-form login active" : "login-form login";
-    private string signupFormClass => store.State().LoginClicker.IsClicked ? "login-form sign-up active" : "login-form sign-up";
+    private string loginFormClass => store.State().LoginClicker.ShowLogin ? "login-form login active" : "login-form login";
+    private string signupFormClass => store.State().LoginClicker.ShowSignup ? "login-form sign-up active" : "login-form sign-up";
 
     private bool showLogin { get; set; } = false;
 
     private string shoppingCartClass => store.State().CartClicker.ShowCart ? "shopping-cart active" : "shopping-cart";
 
     private string UploadClass => store.State().UploadClicker.ShowUpload ? "login-form upload-form active" : "upload-form";
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        GetProjectName();
+        await adsControl.GetAds();
         store.AddStateChangedListeners(() => { updateChange(); });
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && store.State().ActiveUser.User.Id == "")
+        {
+            await GetUserFromCookie();
+        }
     }
     public void Dispose()
     {
@@ -107,75 +98,86 @@
     }
     private void updateChange()
     {
-        if (!store.State().LoginClicker.IsClicked)
-        {
-            this.showSignupForm = false; 
-        }
         StateHasChanged();
+    }
+    private async Task GetUserFromCookie()
+    {
+        try
+        {
+            var result = await localStorage.GetAsync<string>("user");
+            var value = result.Value;
+            // var value = (await localStorage.GetAsync<string>("digicart-user")).Value;
+            if (!string.IsNullOrEmpty(value))
+            {
+                var user = await uc.ReadUser(value ?? "");
+                if (user != null && !string.IsNullOrEmpty(user.Id))
+                {
+                    store.AddActiveUser(user);
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            string error = e.Message;
+        }
     }
     private void ToggleToLoginForm()
     {
-        showLoginForm = true;
-        showSignupForm = false;
-
-        store.LoginClick(showSignupForm);
+        store.LoginClick(true,false);
     }
     private void ToggleLoginForms()
     {
-        showSignupForm = !showSignupForm;
-        showLoginForm = false;
         showSearchForm = false;
         showNavbar = false;
 
-        store.LoginClick(showSignupForm);
+        store.LoginClick(false,true);
         store.ShowCart(false);
         store.ShowUpload(false);
     }
     private void close()
     {
-        store.LoginClick(false);
+        store.LoginClick(false,false);
     }
     private void closeUpload()
     {
+        store.ChangeProductVal(new());//refresh
         store.ShowUpload(false);
     }
     private void ToggleToSignupForm()
     {
-        showLoginForm = false;
-        showSignupForm = true;
-        store.LoginClick(showSignupForm);
+        store.LoginClick(false,true);
     }
 
     private void ToggleNavbar()
     {
         showNavbar = !showNavbar;
-
-        showLoginForm = false;
-        showSignupForm = false;
         showSearchForm = false;
 
-        store.LoginClick(showSignupForm);
+        store.LoginClick(false,false);
     }
     private void ToggleOff()
     {
-        showLoginForm = false;
-        showSignupForm = false;
         showSearchForm = false;
         showNavbar = false;
 
-        store.LoginClick(showSignupForm);
+        store.LoginClick(false,false);
     }
-
+    private async void GetProjectName()
+    {
+        string key = JsonConvert.SerializeObject("project");
+        var data = await database.Read("Project", key);
+        if (!string.IsNullOrEmpty(data.Value))
+        {
+            projectName = JsonConvert.DeserializeObject<string>(data.Value) ?? "Shop Now";
+        }
+    }
 
     private void Search()
     {
         showSearchForm = !showSearchForm;
-
-        showLoginForm = false;
-        showSignupForm = false;
         showNavbar = false;
 
-        store.LoginClick(showSignupForm);
+        store.LoginClick(false,false);
     }
     private void closeCart()
     {

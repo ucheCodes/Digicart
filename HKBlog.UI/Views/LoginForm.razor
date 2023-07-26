@@ -1,6 +1,7 @@
 ﻿@page "/login"
 @inject IUserController userController
 @inject IStore store
+@inject ProtectedLocalStorage localStorage
 @implements IDisposable
 <em class="error">@message</em>
 @if (errors.Count > 0)
@@ -19,11 +20,12 @@
         <div>
             <div>
             <h3>Sign Up now</h3>
-                <InputText @bind-Value="user.Email" @onblur="(() => IsValidEmail(user.Email))" type="email" placeholder="enter your valid email" class="box" />
-                <InputText @bind-Value="user.Password" type="password" placeholder="enter strong password" class="box" />
-                <InputText @bind-Value="user.Password2" type="password" placeholder="confirm strong password" class="box" />
-                <InputText @bind-Value="user.Username" placeholder="Full Name" class="box" />
-                <InputNumber @bind-Value="user.OTP" @onblur="(() => CheckOTP(user.OTP,user.Email))" placeholder="4 - digits Authentication Pin" class="box" />
+                <InputText maxlength="40" @bind-Value="user.Username" placeholder="Full Name" class="box" />
+                <InputText maxlength="40" @bind-Value="user.Email" @onblur="(() => IsValidEmail(user.Email))" type="email" placeholder="enter your valid email" class="box" />
+                <InputText maxlength="40" @bind-Value="user.Mobile" @onblur="(() => IsMobileValid(user.Mobile))" placeholder="enter your valid mobile number" class="box" />
+                <InputText maxlength="40" @bind-Value="user.Password" type="password" placeholder="enter strong password" class="box" />
+                <InputText maxlength="40" @bind-Value="user.Password2" type="password" placeholder="confirm strong password" class="box" />
+@*                <InputNumber @bind-Value="user.OTP" @onblur="(() => CheckOTP(user.OTP,user.Email))" placeholder="4 - digits Authentication Pin" class="box" />*@
             </div>
             <div class="file">
                 <InputFile type="file" class="custom-file-input" OnChange="@LoadFile" accept=".png,.jpg,.jpeg" />
@@ -35,19 +37,21 @@
                 {
                     <img src="@FilePath" alt="default">
                 }
-        </div>
+            </div>
         </div>
         <button type="submit" class="btn">Submit</button>
     </EditForm>
 
 @code {
     private bool isEmailvalid { get; set; }
+    private bool isMobileValid { get; set; }
     private bool isEmailOTPValid { get; set; }
     private string message = "";
     public User user { get; set; } = new();
     public string FilePath { get; set; } = "./img/user-2.png";
     protected override void OnInitialized()
     {
+        user = new();
         store.AddStateChangedListeners(() => { StateHasChanged(); }); 
     }
     private async  void LogUser()
@@ -63,16 +67,35 @@
                 user.AllowAcess = true;
             }
         }
-        if (isEmailvalid && isEmailOTPValid)
+        if (isEmailvalid && isMobileValid)
         {
             var isAdded = (await userController.AddUser(user));
             if (isAdded)
             {
-                isEmailOTPValid = false;
+                //isEmailOTPValid = false;
                 isEmailvalid = false;
                 //add user to state
-                store.LoginClick(false);
+                store.LoginClick(false,false);//add user to cookie
                 store.AddActiveUser(user);
+                SaveUserToCookie(user.Id);
+            }
+        }
+        else
+        {
+            message = "email or mobile adress invalid!!!";
+        }
+    }
+    private async void SaveUserToCookie(string userId)
+    {
+        if (!string.IsNullOrEmpty(userId))
+        {
+            try
+            {
+                await localStorage.SetAsync("user", userId);
+            }
+            catch (Exception)
+            {
+                message = "";
             }
         }
     }
@@ -114,9 +137,33 @@
         else
         {
             this.isEmailvalid = true;
-            this.message = "Complete Sign up with 4-digit authentication code sent to input email.";
+            this.message = "";
         }
     }
+    private void IsMobileValid(string mobile)
+    {
+        if (!string.IsNullOrEmpty(mobile))
+        {
+            //string pattern = @"^\+(?:\d{1,3})?\d{10}$";
+            string pattern = @"^(?:\+?\d{1,3})?(?:0|\d{1,4})\d{10}$";//@"^(?:\+?\d{1,3})?\d{10}$";
+            Regex regex = new Regex(pattern);
+            if (mobile.Contains("+") || (!mobile.Contains("+") && mobile.Length == 11 && mobile.StartsWith("0")))
+            {
+                isMobileValid = regex.IsMatch(mobile);
+                if (!isMobileValid)
+                {
+                    message = "Mobile must have max of 14 characters \n" +
+                        "It may include '+' sign, country code and mobile digits";
+                }
+                else{ message = ""; }
+            }
+            else
+            {
+                message = "Mobile number is not in a correct format";
+            }
+        }
+    }
+
     //File upload management
     [Inject]
     private IWebHostEnvironment? _environment { get; set; }

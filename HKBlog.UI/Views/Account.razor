@@ -1,0 +1,121 @@
+﻿@page "/account"
+@inject IStore store
+@inject IOrderController orderController
+
+<section class="account">
+    <h1 class="heading">User <span>Account</span></h1>
+    @if (string.IsNullOrEmpty(store.State().ActiveUser.User.Id))
+    {
+        <div class="info">
+            <div class="flex-col">
+                <h3>User Name</h3>
+                <h3>080xxxyyyzz</h3>
+                <h3>abc@xyz.net</h3>
+            </div>
+            <div class="flex-col">
+                <img src="./img/user-2.png" />
+                <em class="error">log in</em>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="info">
+            <div class="flex-col">
+                <h3>@store.State().ActiveUser.User.Username</h3>
+                <h3>@store.State().ActiveUser.User.Mobile</h3>
+                <h3>@store.State().ActiveUser.User.Email</h3>
+            </div>
+            <div class="flex-col">
+                @if (string.IsNullOrEmpty(store.State().ActiveUser.User.Filepath))
+                {
+                    <img src="./img/user-2.png" />
+                }
+                else
+                {
+                   <img src="@store.State().ActiveUser.User.Filepath" />
+                }
+                <em class="online">online</em>
+            </div>
+        </div>
+    }
+    <div class="box-container">
+        <div @onclick="(() => {selected = 1;})" class="box">
+            <h3>Wallet</h3>
+            <h3>@naira 0</h3>
+        </div>
+        <div @onclick="(() => {selected = 2;})" class="box">
+            <h3>Orders</h3>
+            <h3>@orders.Count</h3>
+        </div>
+        <div @onclick="(() => {selected = 3;})" class="box">
+            <h3>Deliveries</h3>
+            <h3>@delivered.Count</h3>
+        </div>
+        <div @onclick="(() => {selected = 4;})" class="box">
+            <h3>Transactions</h3>
+            <h3>@pt.Count</h3>
+        </div>
+    </div>
+    @switch (selected)
+    {
+        case 1:
+            <p class="p">Wallet functionality yet to be implemented</p>
+        break;
+        case 2:
+            if(orders.Count > 0)
+            {
+                <OrderTable orders="orders" TableTitle="Ordered Products" />
+            }
+            else
+            {
+                <p class="p">You have made no order on this platform</p>
+            }
+            break;
+        case 3:
+            if (delivered.Count > 0)
+            {
+                <OrderTable orders="delivered" TableTitle="Delivered Products" />
+            }
+            else
+            {
+                <p class="p">Zero record of successful transactions</p>
+            }
+            break;
+        case 4:
+            if (pt.Count > 0)
+            {
+                <DynamicTables TableItems="pt" InitializeSortByTime="true" TableTitle="Payment Details" />
+            }
+            else
+            {
+                <p class="p"> You have made no payment on this platform </p>
+            }
+            break;
+        default:
+            <p></p>
+        break;
+    }
+    <Ads section="products"/>
+</section>
+
+@code {
+    char naira = (char)8358;
+    List<Orders> orders = new();
+    List<PaystackTransaction> pt = new();
+    List<Orders> delivered = new();
+    int selected = 1;
+    List<string> IgnoreOrderHeader = new List<string>() { "AuthorizationUrl","Products", "IsValid" };
+    protected override async Task  OnInitializedAsync()
+    {
+        orders = (await orderController.GetAllOrders()).Where(d => d.Email.ToLower().Equals(store.State().ActiveUser.User.Email.ToLower())).ToList();
+        var allPt = await orderController.GetAllPaystackTransaction();
+        delivered = orders.Where(d => d.IsDelivered).ToList();
+        pt = allPt.Where(p => p.Email.ToLower().Equals(store.State().ActiveUser.User.Email.ToLower())).ToList();
+        store.AddStateChangedListeners(() => { StateHasChanged(); });
+    }
+    public void Dispose()
+    {
+        store.RemoveStateChangedListeners(() => { StateHasChanged(); });
+    }
+}

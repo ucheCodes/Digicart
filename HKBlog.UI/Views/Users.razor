@@ -2,25 +2,19 @@
 @inject IUserController userController
 @inject IProductController productController
 @inject IStore store
+@inject IDatabase database
 @implements IDisposable
 
-@if (store.State().ActiveUser.User.Id != "" && store.State().ActiveUser.User.IsAdmin)
-{
-    <div class="form center-div">
-        <h1 class="heading">For Admin <span>Authorization</span>only</h1>
-        <input @bind-value="publicKey" class="box" placeholder="enter paystacks public key">
-        <input @bind-value="secretKey" class="box" placeholder="enter paystacks secret key">
-        <button @onclick="SaveKeys" class="btn">Save</button>
+<section class="dynamic-table">
+    <div class="table-header">
+        <h1 class="heading">Registered <span>Users</span></h1>
     </div>
-}
-
-<section class="users">
-    <h1 class="heading">Registered <span>Users</span></h1>
-    <div class="table">
-        <table>
-            <thead>
+    <div class="table @tableSizeClass">
+        <div class="table-body">
+            <table>
+                <thead>
                 <tr>
-                    <th>S / N</th>
+                    <th>S/N</th>
                     <th>Name</th>
                     <th>Email</th>
                     <th>Is Admin</th>
@@ -30,58 +24,73 @@
                         <th>Has Admin Acess</th>
                     }
                 </tr>
-            </thead>
-            <tbody>
-                @{ int count = 0;
-                foreach (var user in users)
+                </thead>
+                <tbody>
+                @foreach (var user in users)
                 {
-                    <tr>
-                        <td>@count</td>
-                        <td>@user.Username</td>
-                        <td>@user.Email</td>
-                        <td>@user.IsAdmin</td>
-                       @if (!string.IsNullOrEmpty(user.Filepath))
+                <tr>
+                    <td>@count</td>
+                    <td>@user.Username</td>
+                    <td>@user.Email</td>
+                    <td>@user.IsAdmin</td>
+                    @if (!string.IsNullOrEmpty(user.Filepath))
+                    {
+                        <td><img src="@user.Filepath" /></td>
+                    }
+                    else
+                    {
+                        <td><img  src="@FilePath" /></td>
+                    }
+                    @if (store.State().ActiveUser.User != null && store.State().ActiveUser.User.IsAdmin)
+                    {
+                        @if (user.AllowAcess)
                         {
-                            <td><img class="table-img" src="@user.Filepath" /></td>
+                            <td>
+                                <input type="checkbox" checked />
+                            </td>
                         }
                         else
                         {
-                            <td><img class="table-img" src="@FilePath" /></td>
+                            <td>
+                                <input type="checkbox" @onchange="(() => GrantAcess(user))" />
+                            </td>
                         }
-                        @if (store.State().ActiveUser.User != null && store.State().ActiveUser.User.IsAdmin)
-                        {
-                            @if (user.AllowAcess)
-                            {
-                                <td>
-                                    <input type="checkbox" checked />
-                                </td>
-                            }
-                            else
-                            {
-                                <td>
-                                    <input type="checkbox" @onchange="(() => GrantAcess(user))" />
-                                </td>
-                            }
-                        }
-                    </tr>
-                    count++;
+                    }
+                </tr>
+                count++;
                 }
-                }
-            </tbody>
-        </table>
-
+                </tbody>
+            </table>
+        </div>
     </div>
 </section>
 
+@if (store.State().ActiveUser.User.Id != "" && store.State().ActiveUser.User.IsAdmin)
+{
+    <div class="form center-div">
+        <h1 class="heading">For Admin <span>Authorization</span>only</h1>
+        <input @bind-value="publicKey" class="box" placeholder="enter paystacks public key">
+        <input @bind-value="secretKey" class="box" placeholder="enter paystacks secret key">
+        <button @onclick="SaveKeys" class="btn">Save</button>
+        <input @bind="projectName" class="box" type="text" placeholder="Give the project a title" />
+        <button @onclick="AddProjectName" class="btn">Add</button>
+    </div>
+
+}
+
 @code{
-    private int count = 0;
     List<User> users = new();
     string publicKey = "";
     string secretKey = "";
+    string projectName = "";
+    string tableSizeClass = "scanty";
+    int count = 0;
     public string FilePath { get; set; } = "./img/user-2.png";
     protected async override Task OnInitializedAsync()
     {
         users = await userController.ReadAllUsers();
+        if (users.Count > 5)
+            tableSizeClass = "large";
         store.AddStateChangedListeners(() => { StateHasChanged(); });
     }
     public void Dispose()
@@ -92,6 +101,19 @@
     {
         user.AllowAcess = true;
         await userController.AddUser(user);
+    }
+    private async void AddProjectName()
+    {
+        if (projectName != "")
+        {
+            string key = JsonConvert.SerializeObject("project");
+            string value = JsonConvert.SerializeObject(projectName);
+            var isAdded = await database.Create("Project", key, value);
+            if (isAdded)
+            {
+                projectName = string.Empty;
+            }
+        }
     }
     private void SaveKeys()
     {

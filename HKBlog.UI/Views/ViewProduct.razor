@@ -1,6 +1,7 @@
 ﻿@page "/view/{id}"
 @inject IProductController productController
 @inject IStore store
+@inject AdsControl adsControl
 @implements IDisposable
 
 <div class="product">
@@ -28,14 +29,17 @@
             </div>
         </div>
     </div>
-
+    @if (adsControl.AdsList.Count > 0)
+    {
+        <Ads section="ads"/>
+    }
     @if (related.Count > 0)
     {
         <h1>Related Products</h1>
         <div class="related-container">
             @foreach (var rel in related)
             {
-                <div class="box" @onclick="(() => ShowRelated(rel))">
+                <div class="rel" @onclick="(() => ShowRelated(rel))">
                     <div class="img">
                         <img src="@rel.Filepath" alt="product">
                     </div>

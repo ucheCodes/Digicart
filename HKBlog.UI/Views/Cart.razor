@@ -32,31 +32,20 @@
        }
              <div class="total">total : @naira @store.State().CartTotal.Total</div>
              <div>
-                <div class="error"> @message</div>
-                @if (!string.IsNullOrEmpty(store.State().ActiveUser.User.Email))
-                {
-                    <input type="email" disabled  value="@store.State().ActiveUser.User.Email" placeholder="Enter your email address" class="box">
-                }
-                else
-                {
-                   <input type="email" @onblur="(() => IsValidEmail(email))" @bind="email" placeholder="Enter your email address" class="box">
-                }
-                 <input type="tel" @bind="mobile" placeholder="Enter valid mobile number" class="box">
+             <div class="error"> @message</div>
+             <input maxlength="140" @onblur="(() =>IsValidEmail(email))" type="email" @bind="email" placeholder="Enter your email address" class="input">
+             <input maxlength="40" @onblur="(() => IsMobileValid(mobile))" type="tel" @bind="mobile" placeholder="Enter valid mobile number" class="input">
+            @*<select @onchange="GetLogisticFee" class="input">
+                <option value="0">Select city</option>
+                <option value="100">Abia : @naira 100</option>
+                <option value="200">Lagos : @naira 200</option>
+                <option value="300">Abuja : @naira 500</option>
+             </select>*@
              </div>
-            @if (store.State().PaystackAuthUrl.AuthKeyVal.Key)
-            {
-                <div class="coloured">
-                    <a href="@store.State().PaystackAuthUrl.AuthKeyVal.Value" class="btn">Pay @naira @store.State().CartTotal.Total</a>
-                </div>
-            }
-            else
-            {
-                if (msg!= "")
-                {
-                    <small class="error">@msg</small>
-                }
-                <a href="" @onclick="Checkout" class="btn">check out</a>
-            }
+            <div class="coloured">
+                <small class="log">@msg</small>
+                <a @onclick="Checkout" class="btn">Pay @naira @store.State().CartTotal.Total</a>
+            </div>
     </div>
 }
 else
@@ -71,9 +60,10 @@ else
     string email = "";
     string mobile = "";
     string message = "";
-    string msg = "";
+    string msg = "N.B: Logistics fees not included, to be negotiated ...";
     string domainName = "";
     bool isEmailValid = false;
+    bool isMobileValid = false;
     List<User> users = new();
     public string data { get; set; } = string.Empty;
     string paystack_public_key = "";//"pk_test_89afab3000854e4e6ec835bf2f93c186403954ba";
@@ -84,7 +74,19 @@ else
         var uri = new Uri(navigationManager.Uri);
         domainName = uri.Host;
         GetPaystackKeys();
+        if (!string.IsNullOrEmpty(store.State().ActiveUser.User.Id))
+        {
+            email = store.State().ActiveUser.User.Email;
+            mobile = store.State().ActiveUser.User.Mobile;
+        }
         store.AddStateChangedListeners(() => { StateHasChanged(); });
+    }
+    private void GetLogisticFee(ChangeEventArgs e)
+    {
+        double result = 0;//remember to add 100 naira to whatever logistic value
+        double.TryParse(e.Value?.ToString(), out result);
+        store.State().LogisticFee = result;
+        store.ComputeCartTotal();//whatever location chosen must be sent to orders
     }
     public void Dispose()
     {
@@ -99,14 +101,28 @@ else
             paystack_secret_key = dict["secret"];
         }
     }
-    private bool isMobileValid()
+    private bool IsMobileValid(string mobile)
     {
         if (!string.IsNullOrEmpty(mobile))
         {
             //string pattern = @"^\+(?:\d{1,3})?\d{10}$";
             string pattern = @"^(?:\+?\d{1,3})?(?:0|\d{1,4})\d{10}$";//@"^(?:\+?\d{1,3})?\d{10}$";
             Regex regex = new Regex(pattern);
-            return regex.IsMatch(mobile);
+            if (mobile.Contains("+") || (!mobile.Contains("+") && mobile.Length == 11 && mobile.StartsWith("0")))
+            {
+                isMobileValid = regex.IsMatch(mobile);
+                if (!isMobileValid)
+                {
+                    message = "Mobile must have max of 14 characters \n" +
+                        "It may include '+' sign, country code and mobile digits";
+                }
+                else { message = ""; }
+                return isMobileValid;
+            }
+            else
+            {
+                message = "Mobile number is not in a correct format";
+            }
         }
         return false;
     }
@@ -144,12 +160,7 @@ else
     }
     private async void Checkout()
     {
-        if ((!string.IsNullOrEmpty(store.State().ActiveUser.User.Email)))
-        {
-            email = store.State().ActiveUser.User.Email;
-            isEmailValid = true; 
-        }
-        if (!string.IsNullOrEmpty(email) && isMobileValid() && isEmailValid)
+        if (IsValidEmail(email) && IsMobileValid(mobile))
         {
             msg = "please wait while we authenticate payment channel ...";
             message = "";
@@ -190,6 +201,7 @@ else
                             Products = store.State().Cart.Items.ToList(),
                             Date = DateTime.Now
                         };
+                        navigationManager.NavigateTo(paystackAuthorizationUrl);
                         await orderController.AddPendingOrder(order);
                         await SendMail(_data.email, order.Reference);
                     }
