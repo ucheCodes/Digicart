@@ -10,7 +10,7 @@
     <span class="logo">@projectName <i class="fas fa-shopping-cart"></i></span>
 
     <nav @onclick="ToggleOff" class="@navbarClass">
-        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">Home</NavLink>
+        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">Shop</NavLink>
         <NavLink class="nav-link" href="account">Account</NavLink>
         <NavLink class="nav-link" href="reviews">Reviews</NavLink>
         @if (!string.IsNullOrEmpty(store.State().ActiveUser.User.Id) && store.State().ActiveUser.User.AllowAcess)

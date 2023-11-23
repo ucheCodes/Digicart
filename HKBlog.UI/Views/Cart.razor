@@ -32,9 +32,22 @@
        }
              <div class="total">total : @naira @store.State().CartTotal.Total</div>
              <div>
-             <div class="error"> @message</div>
+             <div class="error">@message</div>
              <input maxlength="140" @onblur="(() =>IsValidEmail(email))" type="email" @bind="email" placeholder="Enter your email address" class="input">
              <input maxlength="40" @onblur="(() => IsMobileValid(mobile))" type="tel" @bind="mobile" placeholder="Enter valid mobile number" class="input">
+
+@*             @if(string.IsNullOrEmpty(store.State().ActiveUser.User.Id)){
+                <input maxlength="140" @onblur="(() =>IsValidEmail(email))" type="email" @bind="email" placeholder="Enter your email address" class="input">
+                <input maxlength="40" @onblur="(() => IsMobileValid(mobile))" type="tel" @bind="mobile" placeholder="Enter valid mobile number" class="input">
+            }
+            else
+            {
+                mobile = store.State().ActiveUser.User.Mobile; email = store.State().ActiveUser.User.Email;
+                <input disabled value="@store.State().ActiveUser.User.Email" class="input">
+                <input disabled value="@store.State().ActiveUser.User.Mobile" class="input">
+            }*@
+
+
             @*<select @onchange="GetLogisticFee" class="input">
                 <option value="0">Select city</option>
                 <option value="100">Abia : @naira 100</option>
@@ -64,6 +77,7 @@ else
     string domainName = "";
     bool isEmailValid = false;
     bool isMobileValid = false;
+    bool isUserContactInitialized = false;
     List<User> users = new();
     public string data { get; set; } = string.Empty;
     string paystack_public_key = "";//"pk_test_89afab3000854e4e6ec835bf2f93c186403954ba";
@@ -74,12 +88,21 @@ else
         var uri = new Uri(navigationManager.Uri);
         domainName = uri.Host;
         GetPaystackKeys();
-        if (!string.IsNullOrEmpty(store.State().ActiveUser.User.Id))
+        store.AddStateChangedListeners(() => { StateHasChanged(); });
+    }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!string.IsNullOrEmpty(store.State().ActiveUser.User.Id) && !isUserContactInitialized)
         {
             email = store.State().ActiveUser.User.Email;
             mobile = store.State().ActiveUser.User.Mobile;
+            isUserContactInitialized = true;
         }
-        store.AddStateChangedListeners(() => { StateHasChanged(); });
+        //store.AddStateChangedListeners(() => { StateHasChanged(); });
+    }
+    private void Hello()
+    {
+        
     }
     private void GetLogisticFee(ChangeEventArgs e)
     {
@@ -216,7 +239,7 @@ else
         }
         else
         {
-            message = "email and address fields must not be empty or invalid";
+            message = "please enter a valid mobile and email address";
         }
     }
 }

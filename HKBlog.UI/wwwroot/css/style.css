@@ -40,7 +40,7 @@
 .slider img {
     height: 100%;
     width: 100%;
-    object-fit: revert;
+    object-fit: fill;
     z-index: -1;
 }
 .slider.zoom-in {

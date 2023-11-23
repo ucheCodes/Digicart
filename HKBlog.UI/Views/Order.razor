@@ -173,6 +173,7 @@ else if (message == "error")
                             var order = orders.Find(x => x.Reference == reference) ?? new Orders();
                             if (!string.IsNullOrEmpty(order.Reference) && data.status == "success")
                             {
+                                order.IsValid = true;
                                 var isAdded = await orderController.AddPendingOrder(order);
                                 var addPt = await orderController.AddPaystackTransaction(pt);
                                 if (isAdded)
