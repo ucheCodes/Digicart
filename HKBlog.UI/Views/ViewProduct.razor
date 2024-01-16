@@ -9,7 +9,7 @@
         <div class="box">
             <div class="col-2">
                 <h1>@product.Name</h1>
-                <h1>@naira @product.Price</h1>
+                <h1>@naira @product.Price.ToString("N0")</h1>
                 <p>
                     @product.Description
                 </p>
@@ -44,7 +44,7 @@
                         <img src="@rel.Filepath" alt="product">
                     </div>
                     <h3>@rel.Name</h3>
-                    <p>@naira @rel.Price</p>
+                    <p>@naira @rel.Price.ToString("N0")</p>
                 </div>
             }
         </div>
@@ -58,6 +58,7 @@
     public List<Product> related { get; set; } = new();
     string Filepath = "./img/yellow.jpg";
     char naira = (char)8358;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -76,8 +77,15 @@
     }
     private void ShowAndAddToCart(Product product)
     {
-        store.AddToCart(product);
-        store.ShowCart(true);
+        if (string.IsNullOrEmpty(store.State().ActiveUser.User.Id))
+        {
+            store.LoginClick(false, true);
+        }
+        else
+        {
+            store.AddToCart(product);
+            store.ShowCart(true);
+        }
     }
     private void ShowRelated(Product rel)
     {

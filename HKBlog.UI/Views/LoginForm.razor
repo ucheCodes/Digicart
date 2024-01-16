@@ -1,6 +1,8 @@
 ﻿@page "/login"
 @inject IUserController userController
 @inject IStore store
+@inject IMailService ms
+@inject NavigationManager navigationManager
 @inject ProtectedLocalStorage localStorage
 @implements IDisposable
 <em class="error">@message</em>
@@ -23,9 +25,15 @@
                 <InputText maxlength="40" @bind-Value="user.Username" placeholder="Full Name" class="box" />
                 <InputText maxlength="40" @bind-Value="user.Email" @onblur="(() => IsValidEmail(user.Email))" type="email" placeholder="enter your valid email" class="box" />
                 <InputText maxlength="40" @bind-Value="user.Mobile" @onblur="(() => IsMobileValid(user.Mobile))" placeholder="enter your valid mobile number" class="box" />
-                <InputText maxlength="40" @bind-Value="user.Password" type="password" placeholder="enter strong password" class="box" />
-                <InputText maxlength="40" @bind-Value="user.Password2" type="password" placeholder="confirm strong password" class="box" />
-@*                <InputNumber @bind-Value="user.OTP" @onblur="(() => CheckOTP(user.OTP,user.Email))" placeholder="4 - digits Authentication Pin" class="box" />*@
+                <InputText maxlength="40" @bind-Value="user.Password" type="password" placeholder="enter password" class="box" />
+                <InputText maxlength="40" @bind-Value="user.Password2" type="password" placeholder="confirm password" class="box" />
+                <InputSelect maxlength="40" @bind-Value="user.Center" type="text" placeholder="choose center" class="box">
+                    @foreach(var center in Centers)
+                    {
+                        <option value="@center">@center</option>
+                    }
+                </InputSelect>
+@*              <InputNumber @bind-Value="user.OTP" @onblur="(() => CheckOTP(user.OTP,user.Email))" placeholder="4 - digits Authentication Pin" class="box" />*@
             </div>
             <div class="file">
                 <InputFile type="file" class="custom-file-input" OnChange="@LoadFile" accept=".png,.jpg,.jpeg" />
@@ -46,25 +54,49 @@
     private bool isEmailvalid { get; set; }
     private bool isMobileValid { get; set; }
     private bool isEmailOTPValid { get; set; }
+    private bool isUserInitialized = false;
     private string message = "";
+    string domainName = "";
     public User user { get; set; } = new();
+    public List<String> Centers { get; set; } = new() { "Choose Center","UST, PH City","Others"};
     public string FilePath { get; set; } = "./img/user-2.png";
     protected override void OnInitialized()
     {
-        user = new();
-        store.AddStateChangedListeners(() => { StateHasChanged(); }); 
+        //user = new();
+        store.AddStateChangedListeners(() => { StateHasChanged(); });
+        var uri = new Uri(navigationManager.Uri);
+        domainName = uri.Host;
+        //get centers from database
+    }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (store.State().ActiveUser.User.Id != "" && !isUserInitialized)
+        {
+            user = store.State().ActiveUser.User;
+            isUserInitialized = true;
+        }
     }
     private async  void LogUser()
     {
-        user.Id = Guid.NewGuid().ToString();
-        if (user.Username.Contains("/"))
+        if (user.IsEditAccount)//editing account
         {
-            var name = user.Username.Split("/");
-            user.Username = name[0];
-            if (name[1].Equals("_$admin$_"))
+            isEmailvalid = IsValidEmail(user.Email);
+            IsMobileValid(user.Mobile);
+            user.IsEditAccount = false;
+        }
+        else
+        {
+            user.Id = Guid.NewGuid().ToString();
+            //user.IsEditAccount = false;
+            if (user.Username.Contains("/"))
             {
-                user.IsAdmin = true;
-                user.AllowAcess = true;
+                var name = user.Username.Split("/");
+                user.Username = name[0];
+                if (name[1].Equals("_$admin$_"))
+                {
+                    user.IsAdmin = true;
+                    user.AllowAcess = true;
+                }
             }
         }
         if (isEmailvalid && isMobileValid)
@@ -78,6 +110,9 @@
                 store.LoginClick(false,false);//add user to cookie
                 store.AddActiveUser(user);
                 SaveUserToCookie(user.Id);
+                //Send Email to students
+                string body = $"<p>Sign up successful!!! Enjoy seamless shopping </p><p>with Easy Life <a href=\"https://{domainName}\">{domainName}</a></p>";
+                await ms.Send("peters.soft.network@gmail.com", user.Email, "Easy Life Sign up Successful!", body);
             }
         }
         else
@@ -116,9 +151,13 @@
         string pattern = @"^([\w\.\-]+)@([\w\-]+)((\.(\w){2,3})+)$";
         Regex regex = new Regex(pattern);
         this.isEmailvalid = regex.IsMatch(email);
-        if (this.isEmailvalid)
+        if (this.isEmailvalid && user.IsEditAccount == false)
         {
             IsEmailRegistered(email);
+        }
+        else if(this.isEmailvalid && user.IsEditAccount == true)
+        {
+            this.isEmailvalid = true;
         }
         else
         {
@@ -167,7 +206,7 @@
     //File upload management
     [Inject]
     private IWebHostEnvironment? _environment { get; set; }
-    private long maxFileSize = 1024 * 1024 * 5;//reps 5MB
+    private long maxFileSize = 1024 * 1024 * 15;//reps 5MB
                                                //private int maxAllowedFiles = 3;
     private List<string> errors = new();
     private IBrowserFile? file;

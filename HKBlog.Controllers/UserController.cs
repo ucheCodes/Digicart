@@ -25,6 +25,19 @@
             var res = await database.Create("Users", id, serialized);
             return res;
         }
+        public async Task<User> ReadUser(string id)
+        {
+            User user = new ();
+            var key = JsonConvert.SerializeObject(id);
+            var data = await database.Read("Users",key);
+            if (data.Key != "")
+            {
+                    var des = JsonConvert.DeserializeObject<User>(data.Value);
+                    user = des ?? new User();
+                
+            }
+            return user;
+        }
         public async Task<List<User>> ReadAllUsers()
         {
             List<User> users = new List<User>();
@@ -39,7 +52,7 @@
             }
             return users;
         }
-        public async void SendUsersPassword(string email)
+        public async Task<bool> SendUsersPassword(string email)
         {
             var users = (await ReadAllUsers()).ToList<User>();
             if (users != null && users.Count > 0)
@@ -47,10 +60,15 @@
                 var isUser = users.Find(x => x.Email.Equals(email));
                 if (isUser != null)
                 {
-                    await ms.Send("peters.soft.network@gmail.com", email, "Password retrieval from HKI",
+                    var isSent = await ms.Send("peters.soft.network@gmail.com", email, "Password retrieval from Digicart E-Commerce web app",
                      $"<p>kindly login on to the site with your registered password {isUser.Password}");
+                    if (isSent)
+                    {
+                        return true;
+                    }
                 }
             }
+            return false;
         }
         public async Task<bool> IsEmailOTP(int otp, string email)
         {
@@ -77,12 +95,12 @@
                 var isReg = users.Any(x => x.Email.Equals(email));
                 if (!isReg)
                 {
-                    GetAndMailOTP(email);
+                   // GetAndMailOTP(email);
                     return false;
                 }
                 return true;
             }
-            GetAndMailOTP(email);
+           // GetAndMailOTP(email);
             return false;
         }
         public async void GetAndMailOTP(string email)
@@ -104,13 +122,16 @@
             }
             if (sendMail)
             {
-                await ms.Send("peters.soft.network@gmail.com", email, "PSN Form Validation Bot",
+                var isSent = await ms.Send("peters.soft.network@gmail.com", email, "PSN Mailing Service Bot",
                     $"<p>kindly complete your registration on the site with this unique authentication code {code} " +
                     $"<em>The One Time Pin(OTP) code expires in 10 minutes.</em></p>");
                 //save emails and OTPS sent differently
-                Emails em = new Emails(email, code, DateTime.Now);
-                var serialized = JsonConvert.SerializeObject(em);
-                var mails = await database.Create("Emails", JsonConvert.SerializeObject(email), serialized);
+                if (isSent)
+                {
+                    Emails em = new Emails(email, code, DateTime.Now);
+                    var serialized = JsonConvert.SerializeObject(em);
+                    var mails = await database.Create("Emails", JsonConvert.SerializeObject(email), serialized);
+                }
             }
         }
         public async Task<User> LoginUser(string email, string password)

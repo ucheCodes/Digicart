@@ -20,7 +20,7 @@ namespace HKBlog.Models
         public string Filepath { get; set; } = string.Empty;
         public DateTime Date { get; set; }
         [Required]
-        public int Price { get; set; }
+        public double Price { get; set; }
         public int Quantity { get; set; }
     }
 }

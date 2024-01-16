@@ -8,13 +8,13 @@
             @if (!string.IsNullOrWhiteSpace(special.Filepath))
             {
                 <div @onclick="(() => View(special.Id))" class="img">
-                    <img src="@special.Filepath" alt="product">
+                    <img loading="lazy" src="@special.Filepath" alt="product">
                 </div>
             }
         </div>
         <div class="col-2">
             <h1>@special.Name</h1>
-            <h1>@naira @special.Price</h1>
+            <h1>@naira @special.Price.ToString("N0")</h1>
             <p>
                 @special.Description
             </p>
@@ -46,8 +46,15 @@
     }
     private void ShowAndAddToCart(Product product)
     {
-        store.AddToCart(product);
-        store.ShowCart(true);
+        if (string.IsNullOrEmpty(store.State().ActiveUser.User.Id))
+        {
+            store.LoginClick(false, true);
+        }
+        else
+        {
+            store.AddToCart(product);
+            store.ShowCart(true);
+        }
     }
     private async Task WalkThrough()
     {

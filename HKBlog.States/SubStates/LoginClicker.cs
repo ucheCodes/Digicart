@@ -8,10 +8,12 @@ namespace HKBlog.States.SubStates
 {
     public class LoginClicker
     {
-        public bool IsClicked { get; } = false;
-        public LoginClicker(bool isclicked)
+        public bool ShowLogin { get; } = false;
+        public bool ShowSignup { get; } = false;
+        public LoginClicker(bool showLogin, bool showSignup)
         {
-            IsClicked = isclicked;
+            ShowLogin = showLogin;
+            ShowSignup = showSignup;
         }
     }
 }

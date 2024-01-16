@@ -8,8 +8,8 @@ namespace HKBlog.States.SubStates
 {
     public class CartTotal
     {
-        public int Total { get; }
-        public CartTotal(int total)
+        public double Total { get; }
+        public CartTotal(double total)
         {
             Total = total;
         }

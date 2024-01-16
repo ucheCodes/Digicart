@@ -16,7 +16,31 @@ namespace HKBlog.Controllers
         {
             this.database = database;
         }
-        public async Task<bool> AddPendingOrder(Orders order)
+		public async Task<bool> AddNewOrderForEasyLifeUpdate(NewOrder order)
+		{
+			string key = JsonConvert.SerializeObject(order.Id);
+			string value = JsonConvert.SerializeObject(order);
+			var isAdded = await database.Create("NewOrder", key, value);
+			return isAdded;
+		}
+		public async Task<List<NewOrder>> GetAllNewOrdersForEasyLifeUpdate()
+		{
+			var orders = await database.ReadAll("NewOrder");
+			var data = new List<NewOrder>();
+			if (orders != null && orders.Count() > 0)
+			{
+				foreach (var order in orders)
+				{
+					var ord = JsonConvert.DeserializeObject<NewOrder>(order.Value);
+					if (ord != null)
+					{
+						data.Add(ord);
+					}
+				}
+			}
+			return data;
+		}
+		public async Task<bool> AddPendingOrder(Orders order)
         {
             string key = JsonConvert.SerializeObject(order.Reference);
             string value = JsonConvert.SerializeObject(order);
@@ -67,7 +91,7 @@ namespace HKBlog.Controllers
             }
             return order;
         }
-        public async Task<IEnumerable<Orders>> GetAllOrders()
+        public async Task<List<Orders>> GetAllOrders()
         {
             var orders = await database.ReadAll("Orders");
             var data = new List<Orders>();
@@ -79,6 +103,23 @@ namespace HKBlog.Controllers
                     if (ord != null)
                     {
                         data.Add(ord);
+                    }
+                }
+            }
+            return data;
+        }
+        public async Task<List<PaystackTransaction>> GetAllPaystackTransaction()
+        {
+            var pt = await database.ReadAll("PaystackTransaction");
+            var data = new List<PaystackTransaction>();
+            if (pt != null && pt.Count() > 0)
+            {
+                foreach (var p in pt)
+                {
+                    var pts = JsonConvert.DeserializeObject<PaystackTransaction>(p.Value);
+                    if (pts != null)
+                    {
+                        data.Add(pts);
                     }
                 }
             }

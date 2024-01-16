@@ -12,9 +12,10 @@ namespace HKBlog.Controllers
         Task<bool> AddUser(User user);
         Task<User> LoginUser(string email, string password);
         Task<List<User>> ReadAllUsers();
+        Task<User> ReadUser(string id);
         Task<Boolean> IsEmailRegistered(string email);
         Task<bool> IsEmailOTP(int otp, string email);
-        void SendUsersPassword(string email);
         void GetAndMailOTP(string email);
+        Task<bool> SendUsersPassword(string email);
     }
 }

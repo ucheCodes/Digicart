@@ -10,7 +10,7 @@ namespace HKBlog.Models
     {
         //public string ref { get; set; } = string.Empty;
         public string email { get; set; } = string.Empty;
-        public int amount { get; set; }
+        public double  amount { get; set; }
         public string key { get; set; } = string.Empty; 
     }
 }

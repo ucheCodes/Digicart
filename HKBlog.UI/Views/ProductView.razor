@@ -38,12 +38,12 @@ else
                     <div class="box">
                         @if (!string.IsNullOrWhiteSpace(product.Filepath))
                         {
-                            <div>
+@*                            <div>
                                 <small>@product.Date.ToString("ddd, dd MMM yyyy")</small>
                                 <small>@product.Date.ToString("hh : mm tt")</small>
-                            </div>
+                            </div>*@
                             <div @onclick="(() => View(product.Id))" class="img">
-                                <img src="@product.Filepath" alt="product">
+                                <img loading="lazy" src="@product.Filepath" alt="product">
                             </div>
                             <div class="icons">
                                 @if (!string.IsNullOrEmpty(store.State().ActiveUser.User.Id) && store.State().ActiveUser.User.AllowAcess)
@@ -60,7 +60,7 @@ else
                                 @product.Name &nbsp;&nbsp;
                                 <i @onclick="(() =>AddToCart(product))" class="fas fa-shopping-cart"></i>
                             </h3>
-                            <p>@naira @product.Price</p>
+                            <p>@naira @product.Price.ToString("N0")</p>
                             <button @onclick="(() =>ShowAndAddToCart(product))" class="btn">Buy Now</button>
                         }
                     </div>
@@ -212,8 +212,15 @@ else
     }
     private void ShowAndAddToCart(Product product)
     {
-        store.AddToCart(product);
-        store.ShowCart(true);
+        if (string.IsNullOrEmpty(store.State().ActiveUser.User.Id))
+        {
+            store.LoginClick(false,true);
+        }
+        else
+        {
+            store.AddToCart(product);
+            store.ShowCart(true);
+        }
     }
     private void AddToCart(Product product)
     {

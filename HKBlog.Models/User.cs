@@ -9,8 +9,8 @@ namespace HKBlog.Models
         [EmailAddress]
         public string Email { get; set; } = "";
         [Required]
-        [RegularExpression(@"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$",
-            ErrorMessage = "Password must have at least 8 characters, including a letter, number, and special character.")]
+        public string Mobile { get; set; } = "";
+        [Required]
         public string Password { get; set; } = "";
         [Required]
         [Compare("Password", ErrorMessage = "Password fields do not match, ensure both fields are the same.")]
@@ -19,8 +19,17 @@ namespace HKBlog.Models
         [Required]
         public string Username { get; set; } = "";
         public bool IsAdmin { get; set; }
+        public bool IsEditAccount { get; set; } = false;
         public bool AllowAcess { get; set; }
         [Required]
+        public string Center { get; set; } = "None";
+        //[Required]
         public int OTP { get; set; }
     }
+    /*
+     *Regular expression for creating complex password.
+     *I choose to keep it simple for my users.
+             [RegularExpression(@"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$",
+            ErrorMessage = "Password must have at least 8 characters, including a letter, number, and special character.")]
+     */
 }

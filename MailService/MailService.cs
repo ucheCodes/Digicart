@@ -23,9 +23,9 @@
                 try
                 {
                     smtp.Connect("smtp.gmail.com", 587, SecureSocketOptions.StartTls);
-                    smtp.Authenticate("peters.soft.network@gmail.com", "eekrpdngefpeexhl");//"lsnphzhluoecthqw");
+                    smtp.Authenticate("peters.soft.network@gmail.com", "kdznwmmmmcdcxszr");
                     smtp.Send(email);
-                    smtp.Disconnect(true);//eekrpdngefpeexhl
+                    smtp.Disconnect(true);
                     return Task.FromResult(true);
                 }
                 catch (Exception)

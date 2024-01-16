@@ -10,7 +10,7 @@ namespace HKBlog.States
     public interface IStore
     {
         public State State();
-        void LoginClick(bool clickVal);
+        void LoginClick(bool showLogin, bool showSignup);
         public void AddActiveUser(User user);
         void ShowCart(bool showCart);
         void ShowUpload(bool showUpload);
@@ -18,7 +18,9 @@ namespace HKBlog.States
         void RemoveStateChangedListeners(Action? listeners);
         void AddToCart(Product product);
         void RemoveFromCart(Product product);
-        void ChangeProductVal(Product product);
+        public void ClearCart();
+
+		void ChangeProductVal(Product product);
         void UpdateProducts(List<Product> products);
         void ComputeCartTotal();
         void SetPaystackAuthenticationUrl(bool key, string value);

@@ -5,7 +5,7 @@ namespace HKBlog.States
 {
     public class State
     {
-        public LoginClicker LoginClicker { get; set; } = new LoginClicker(false);
+        public LoginClicker LoginClicker { get; set; } = new LoginClicker(false,false);
         public ActiveUser ActiveUser { get; set; } = new ActiveUser(new User());
         public ShowCartClicker CartClicker { get; set; } = new ShowCartClicker(false);
         public ShowUploadClicker UploadClicker { get; set; } = new ShowUploadClicker(false);
@@ -14,15 +14,17 @@ namespace HKBlog.States
         public ProductItems ProductItems { get; set; } = new ProductItems(new());
         public CartTotal CartTotal { get; set; } = new CartTotal(0);
         public PaystackAuthorisation PaystackAuthUrl { get; set; } = new PaystackAuthorisation(new());
+        //A simple deviation to avoid complex code logics
+        public double LogisticFee { get; set; } = 0;
     }
     public class Store : IStore
     {
         private State state = new State();
         public State State() { return state; }
         #region Mutations
-        public void LoginClick(bool clickVal)
+        public void LoginClick(bool showLogin, bool showSignup)
         {
-            state.LoginClicker = new LoginClicker(clickVal);
+            state.LoginClicker = new LoginClicker(showLogin,showSignup);
             BroadcastStateChanged();
         }
         public  void SetPaystackAuthenticationUrl(bool key,string value)
@@ -59,7 +61,7 @@ namespace HKBlog.States
         public void AddToCart(Product product)
         {
             var products = state.Cart.Items.ToList();
-            if (!products.Contains(product))
+            if (!products.Any(p => p.Id.Equals(product.Id)))
             {
                 products.Add(product);
                 state.Cart = new Cart(products);
@@ -70,7 +72,7 @@ namespace HKBlog.States
         public void RemoveFromCart(Product product)
         {
             var products = state.Cart.Items.ToList();
-            if (products.Contains(product))
+            if (products.Any(p => p.Id.Equals(product.Id)))
             {
                 products.Remove(product);
                 state.Cart = new Cart(products);
@@ -78,15 +80,23 @@ namespace HKBlog.States
                 BroadcastStateChanged();
             }
         }
+        public void ClearCart()
+        {
+			state.Cart = new Cart(new());
+			ComputeCartTotal();
+            BroadcastStateChanged();
+		}
         public void ComputeCartTotal()
         {
-            int total = 0;
+            double total = 0;//add paystack's #100 to logistics
             foreach (var item in state.Cart.Items)
             {
                 total += (item.Price * item.Quantity);
             }
+            //total += State().LogisticFee;
             state.CartTotal = new CartTotal(total);
             BroadcastStateChanged();
+            //To include tax, the best will be to add it to price in the upload
         }
         #endregion
         #region observer patterns

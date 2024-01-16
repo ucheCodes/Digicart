@@ -15,14 +15,16 @@
         <NavLink class="nav-link" href="reviews">Reviews</NavLink>
         @if (!string.IsNullOrEmpty(store.State().ActiveUser.User.Id) && store.State().ActiveUser.User.AllowAcess)
         {
-            <NavLink class="nav-link" href="users"> Users</NavLink>
             <NavLink class="nav-link" href="" @onclick="logUpload">Upload</NavLink>
             <NavLink class="nav-link" href="orders"> Orders</NavLink>
             <NavLink class="nav-link" href="manage-ads">Ads</NavLink>
+            <NavLink class="nav-link" href="users">Users</NavLink>
            <span class="print">
                 <NavLink class="nav-link" href="print">Print</NavLink>
            </span>
+            <NavLink class="nav-link" href="admin">Admin</NavLink>
         }
+        
     </nav>
 
     <div class="icon">
@@ -34,7 +36,7 @@
         {
             <div class="fas fa-shopping-cart" id="blog-btn" @onclick="gotoCart"></div>
         }
-        <a class="fab fa-whatsapp" href="https://api.whatsapp.com/send?phone=2349063809830"></a>
+        <a class="fab fa-whatsapp" href="https://api.whatsapp.com/send?phone=2348181734574"></a>
         <div class="fas fa-search" id="search-btn" @onclick="Search"></div>
         <div class="fas fa-user" id="login-btn" @onclick="ToggleLoginForms"></div>
         <div class="fas fa-bars" id="menu-btn" @onclick="ToggleNavbar"></div>
@@ -46,12 +48,12 @@
     <div class="@loginFormClass">
         <div @onclick="close" class="close">x</div>
         <LoginForm />
-        <p> Already have an account? <span @onclick="ToggleToSignupForm" id="goto-signup">login now</span></p>
+        <b> Already have an account? <span @onclick="ToggleToSignupForm" id="goto-signup">login now</span></b>
     </div>
     <form class="@signupFormClass">
         <div @onclick="close" class="close">x</div>
         <SignupForm />
-        <p>don't have an account <span @onclick="ToggleToLoginForm" id="goto-login">create now</span></p>
+        <b>don't have an account <span @onclick="ToggleToLoginForm" id="goto-login">create now</span></b>
     </form>
     <div class="@shoppingCartClass">
         <div @onclick="closeCart" class="close">x</div>

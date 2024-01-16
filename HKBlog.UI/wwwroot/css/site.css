@@ -1,5 +1,5 @@
 :root {
-    --main-color: #2E8B57;
+    --main-color: #008b8b;
     --main-light: #3CB371;
     --black: #130f40;
     --white: #fff;
@@ -31,6 +31,9 @@
     flex-basis: 50%;
     min-width: 300px;
 }
+.cursor-pointer{
+    cursor: pointer;
+}
 .back{
     margin-top: 1.5rem;
 }
@@ -42,6 +45,15 @@
     display: block;
     text-align: center
 }
+.small-icon {
+    font-size: 15px;
+    font-weight: 700;
+}
+.yellow {
+    color: #daa520;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
 .error{
     color:red;
     font-size: 1.3rem;
@@ -49,7 +61,7 @@
 }
 .online, .log{
     color: green;
-    font-size: 10px;
+    font-size: 1.2rem;
     font-weight: 700;
 }
 .close{
@@ -326,7 +338,7 @@ h1 {
     text-align: center;
     margin: 1rem;
 }
-.header .shopping-cart .input {
+.header .shopping-cart .input,._input {
     width: 100%;
     margin: .7rem 0;
     background: var(--background-color);
@@ -335,6 +347,9 @@ h1 {
     font-size: 1.6rem;
     color: var(--black);
     text-transform: none;
+}
+._input {
+    border: 2px solid var(--black);
 }
 
 #menu-btn {
@@ -716,7 +731,8 @@ td {
 }
 
 /*media queries*/
-@media (max-width:991px) {
+/*If need be, return this to 991px*/
+@media (max-width:1200px) {
     html {
         font-size: 55%;
     }

@@ -8,6 +8,7 @@
 @code {
     public string searchTerm { get; set; } = "";
     public List<Product> products { get; set; } = new();
+    string currentRoute = "";
 
     protected async override Task OnInitializedAsync()
     {
@@ -15,6 +16,10 @@
     }
     private void Search()
     {
+        // currentRoute = navigationManager.ToBaseRelativePath(navigationManager.Uri);
+        //currentRoute = new Uri(navigationManager.Uri).AbsolutePath;
+        //currentRoute = new Uri(navigationManager.Uri).PathAndQuery;
+        currentRoute = new Uri(navigationManager.Uri).LocalPath;
         var _products = products.Where(p =>
             p.Name.ToLower().Contains(searchTerm.ToLower()) ||
             p.Category.Contains(searchTerm.ToLower())).ToList<Product>();
@@ -27,6 +32,10 @@
         {
             products = (products.OrderByDescending(p => p.Date)).ToList<Product>();
             store.UpdateProducts(products);
+        }
+        if (currentRoute != "/")
+        {
+            navigationManager.NavigateTo("/");
         }
     }
 }

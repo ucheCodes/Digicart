@@ -16,5 +16,6 @@ namespace HKBlog.Models
         public List<Product> Products { get; set; } = new();
         public DateTime Date { get; set; }
         public bool IsValid { get; set; }
+        public bool IsDelivered { get; set; }
     }
 }

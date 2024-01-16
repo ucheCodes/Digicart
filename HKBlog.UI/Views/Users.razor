@@ -5,7 +5,7 @@
 @inject IDatabase database
 @implements IDisposable
 
-<section class="dynamic-table">
+<div class="dynamic-table">
     <div class="table-header">
         <h1 class="heading">Registered <span>Users</span></h1>
     </div>
@@ -63,7 +63,7 @@
             </table>
         </div>
     </div>
-</section>
+</div>
 
 @if (store.State().ActiveUser.User.Id != "" && store.State().ActiveUser.User.IsAdmin)
 {
@@ -92,6 +92,10 @@
         if (users.Count > 5)
             tableSizeClass = "large";
         store.AddStateChangedListeners(() => { StateHasChanged(); });
+    }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        count = 0;
     }
     public void Dispose()
     {

@@ -1,6 +1,7 @@
 using HKBlog.Controllers;
 using HKBlog.Database;
 using HKBlog.MailService;
+using HKBlog.Models;
 using HKBlog.States;
 using HKBlog.UI.Data;
 using Microsoft.AspNetCore.Components;
@@ -14,6 +15,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddScoped<AdsControl>();
+builder.Services.AddScoped<IEncryptionHelper, EncryptionHelper>();
 builder.Services.AddScoped<IUserController, UserController>();
 builder.Services.AddScoped<IDatabase, Database>();
 builder.Services.AddScoped<IMailService, MailService>();
@@ -22,6 +24,7 @@ builder.Services.AddScoped<IProductController, ProductController>();
 builder.Services.AddScoped<IOrderController, OrderController>();
 builder.Services.AddScoped<IMailService, MailService>();
 builder.Services.AddScoped<IReviewController, ReviewController>();
+builder.Services.AddScoped<IAccountController, AccountController>();
 builder.Services.AddScoped<SignalRService>();
 builder.Services.AddHttpClient();
 

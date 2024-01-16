@@ -192,6 +192,47 @@
     border-radius: 50%;
 }
 
+/* Styles for the admin form */
+.admin-form {
+    width: 80%;
+    max-width: 400px; /* Set a maximum width to avoid stretching on larger screens */
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
+
+    /* Styles for form elements */
+    .admin-form input,
+    .admin-form select,
+    .admin-form button, .select-center {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+    }
+    .select-center {
+        margin: 15px auto 0px;
+        width: 50%;
+        display: flex;
+    }
+/* Style the button */
+.admin-form button {
+    background-color: var(--main-color);
+    color: #fff;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+    .admin-form button:hover {
+        background-color: var(--main-light);
+    }
+
 
 /*media query*/
 @media(max-width:991px) {
@@ -200,6 +241,10 @@
     }
     .review-ad {
         margin-top: 2.5rem;
+    }
+    .admin-form {
+        width: 90%;
+        max-width: none; /* Remove max-width for smaller screens */
     }
 }
 

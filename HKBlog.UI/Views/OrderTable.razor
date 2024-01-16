@@ -52,4 +52,8 @@
     {
         navigationManager.NavigateTo($"/order-products/{id}");
     }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        count = 1;
+    }
 }
