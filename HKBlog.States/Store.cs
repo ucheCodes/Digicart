@@ -99,6 +99,9 @@ namespace HKBlog.States
             //To include tax, the best will be to add it to price in the upload
         }
         #endregion
+        #region GeneralCodes
+
+        #endregion
         #region observer patterns
         //Define events that will listen for changes
         private Action? _listeners;

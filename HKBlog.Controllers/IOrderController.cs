@@ -12,8 +12,9 @@ namespace HKBlog.Controllers
         Task<PaystackTransaction> GetPaystackTransaction(string key);
         Task<bool> DeleteOrder(string id);
         Task<bool> AddNewOrderForEasyLifeUpdate(NewOrder order);
+        Task<NewOrder> GetNewOrderForEasyLifeUpdate(string id);
 
-		Task<List<NewOrder>> GetAllNewOrdersForEasyLifeUpdate();
+        Task<List<NewOrder>> GetAllNewOrdersForEasyLifeUpdate();
 
 	}
 }

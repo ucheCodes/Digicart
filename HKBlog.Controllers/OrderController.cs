@@ -23,7 +23,18 @@ namespace HKBlog.Controllers
 			var isAdded = await database.Create("NewOrder", key, value);
 			return isAdded;
 		}
-		public async Task<List<NewOrder>> GetAllNewOrdersForEasyLifeUpdate()
+        public async Task<NewOrder> GetNewOrderForEasyLifeUpdate(string id)
+        {
+            NewOrder no = new();
+            var key = JsonConvert.SerializeObject(id);
+            var data = await database.Read("NewOrder", key);
+            if (!string.IsNullOrEmpty(data.Value))
+            {
+                no = JsonConvert.DeserializeObject<NewOrder>(data.Value) ?? new();
+            }
+            return no;
+        }
+        public async Task<List<NewOrder>> GetAllNewOrdersForEasyLifeUpdate()
 		{
 			var orders = await database.ReadAll("NewOrder");
 			var data = new List<NewOrder>();
