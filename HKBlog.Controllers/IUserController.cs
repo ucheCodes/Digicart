@@ -17,5 +17,6 @@ namespace HKBlog.Controllers
         Task<bool> IsEmailOTP(int otp, string email);
         void GetAndMailOTP(string email);
         Task<bool> SendUsersPassword(string email);
+        Task<bool> DeleteUser(string userId);
     }
 }

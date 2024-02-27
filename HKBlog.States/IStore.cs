@@ -11,6 +11,8 @@ namespace HKBlog.States
     {
         public State State();
         void LoginClick(bool showLogin, bool showSignup);
+        void SetProductCategoryList(List<string> category);
+        void SetProductReviews(List<Review> reviews);
         public void AddActiveUser(User user);
         void ShowCart(bool showCart);
         void ShowUpload(bool showUpload);
@@ -23,6 +25,13 @@ namespace HKBlog.States
 		void ChangeProductVal(Product product);
         void UpdateProducts(List<Product> products);
         void ComputeCartTotal();
+        void ModifySelectedPaymentChannel(string channel);
+        void UpdateUsersList(List<User> users);
+        void UpdateNewOrders(List<NewOrder> data);
+        void UpdateAccountNotifications(List<AccountNotification> data);
+        void UpdateOrders(List<Orders> orders);
         void SetPaystackAuthenticationUrl(bool key, string value);
+        void AddProjectName(string name);
+        void UpdateWalletsInformation(List<Wallet> wallets, List<AccountNotification> notifs);
     }
 }

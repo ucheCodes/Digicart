@@ -1,5 +1,6 @@
 ﻿using HKBlog.Models;
 using HKBlog.States.SubStates;
+//using static System.Formats.Asn1.AsnWriter;
 
 namespace HKBlog.States
 {
@@ -14,7 +15,16 @@ namespace HKBlog.States
         public ProductItems ProductItems { get; set; } = new ProductItems(new());
         public CartTotal CartTotal { get; set; } = new CartTotal(0);
         public PaystackAuthorisation PaystackAuthUrl { get; set; } = new PaystackAuthorisation(new());
-        //A simple deviation to avoid complex code logics
+        public ProductCategoryList CategoryList { get; set; } = new ProductCategoryList(new());
+        public ProductReviews Reviews { get; set; } = new ProductReviews(new List<Review>());
+        public PaystackCharge Paystack { get; set; } = new(new());
+        public SelectedPaymentChannel ProductPaymentChannel { get; set; } = new("");
+        public UsersList Users { get; set; } = new(new());
+        public NewOrderList NewOrders { get; set; } = new(new());
+        public OrderList Orders { get; set; } = new(new());
+        public Notifications Notifications { get; set; } = new(new());
+        public ProjectName Project{ get; set; } = new(new(""));
+        public AllWalletsInformation AllWalletsInfo { get; set; } = new(new(), new());
         public double LogisticFee { get; set; } = 0;
     }
     public class Store : IStore
@@ -26,6 +36,14 @@ namespace HKBlog.States
         {
             state.LoginClicker = new LoginClicker(showLogin,showSignup);
             BroadcastStateChanged();
+        }
+        public void SetProductCategoryList(List<string> category)
+        {
+            state.CategoryList = new ProductCategoryList(category);
+        }
+        public void SetProductReviews(List<Review> reviews)
+        {
+            state.Reviews = new ProductReviews(reviews);
         }
         public  void SetPaystackAuthenticationUrl(bool key,string value)
         {
@@ -56,7 +74,7 @@ namespace HKBlog.States
         {
             //var productItems = state.ProductItems.Products;
             state.ProductItems = new ProductItems(products);
-            BroadcastStateChanged();
+            //BroadcastStateChanged();
         }
         public void AddToCart(Product product)
         {
@@ -93,10 +111,57 @@ namespace HKBlog.States
             {
                 total += (item.Price * item.Quantity);
             }
-            //total += State().LogisticFee;
+            if (state.ProductPaymentChannel.Channnel.Equals("paystack"))
+            {
+                ComputePaystackCharges(total);
+				total += state.Paystack.Charge;
+			}
+            total = Math.Ceiling(total);
             state.CartTotal = new CartTotal(total);
             BroadcastStateChanged();
-            //To include tax, the best will be to add it to price in the upload
+        }
+        private void ComputePaystackCharges(double cartTotal)
+        {
+            double charge = 0.05 * cartTotal;
+            double roundedValue = Math.Ceiling(charge);
+            if (cartTotal > 1500)
+            {
+				state.Paystack = new PaystackCharge((roundedValue + 100));
+            }
+            else
+            {
+				state.Paystack = new PaystackCharge(roundedValue);
+			}
+            
+		}
+        public void ModifySelectedPaymentChannel(string channel)
+        {
+            state.ProductPaymentChannel = new SelectedPaymentChannel(channel);
+            ComputeCartTotal();
+        }
+        public void UpdateUsersList(List<User> users)
+        {
+            state.Users = new UsersList(users);
+        }
+        public void UpdateNewOrders(List<NewOrder> data)
+        {
+            state.NewOrders = new NewOrderList(data);
+        }
+        public void UpdateAccountNotifications(List<AccountNotification> data)
+        {
+            state.Notifications = new Notifications(data);
+        }
+        public void UpdateOrders(List<Orders> orders)
+        {
+            state.Orders = new OrderList(orders);
+        }
+        public void AddProjectName(string name)
+        {
+            state.Project = new ProjectName(name);
+        }
+        public void UpdateWalletsInformation(List<Wallet> wallets, List<AccountNotification> notifs)
+        {
+            state.AllWalletsInfo = new(wallets, notifs);
         }
         #endregion
         #region GeneralCodes

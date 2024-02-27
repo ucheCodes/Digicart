@@ -41,14 +41,16 @@ namespace HKBlog.Controllers
             }
             return categories;
         }
-        public async void AddPaystackKey(Dictionary<string,string> keys)
+        public async Task<bool> AddPaystackKey(Dictionary<string,string> keys)
         {
+            bool isAdded = false;
             foreach (var item in keys)
             {
                 string key = JsonConvert.SerializeObject(item.Key);
                 string value = JsonConvert.SerializeObject(item.Value);
-                bool isAdded = await database.Create("Paystack", key, value);
+                isAdded = await database.Create("Paystack", key, value);
             }
+            return isAdded;
         }
         public async Task<Dictionary<string, string>>  GetPaystackKeys()
         {

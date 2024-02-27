@@ -144,5 +144,11 @@
             }
             return  new User();
         }
+        public async Task<bool> DeleteUser(string userId)
+        {
+            string id = JsonConvert.SerializeObject(userId);
+            var res = await database.Delete("Users", id);
+            return res;
+        }
     }
 }

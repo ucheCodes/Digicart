@@ -20,7 +20,7 @@ namespace HKBlog.Models
         public string Username { get; set; } = "";
         public bool IsAdmin { get; set; }
         public bool IsEditAccount { get; set; } = false;
-        public bool AllowAcess { get; set; }
+        public bool IsVendor{ get; set; }
         [Required]
         public string Center { get; set; } = "None";
         //[Required]

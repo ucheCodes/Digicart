@@ -10,7 +10,7 @@ namespace HKBlog.Controllers
         Task<List<string>> GetCategories();
         Task<Product> GetProduct(string id);
         Task<List<Product>> GetProducts();
-        void AddPaystackKey(Dictionary<string, string> keys);
+        Task<bool> AddPaystackKey(Dictionary<string, string> keys);
         Task<Dictionary<string, string>> GetPaystackKeys();
     }
 }
