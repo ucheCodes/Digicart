@@ -25,6 +25,7 @@ namespace HKBlog.States
         public Notifications Notifications { get; set; } = new(new());
         public ProjectName Project{ get; set; } = new(new(""));
         public AllWalletsInformation AllWalletsInfo { get; set; } = new(new(), new());
+        public DispatchedData Dispatched { get; set; } = new(new());
         public double LogisticFee { get; set; } = 0;
     }
     public class Store : IStore
@@ -162,6 +163,11 @@ namespace HKBlog.States
         public void UpdateWalletsInformation(List<Wallet> wallets, List<AccountNotification> notifs)
         {
             state.AllWalletsInfo = new(wallets, notifs);
+        }
+        public void UpdateDispatchedProducts(List<DispatchProduct> products)
+        {
+            state.Dispatched = new DispatchedData(products);
+
         }
         #endregion
         #region GeneralCodes

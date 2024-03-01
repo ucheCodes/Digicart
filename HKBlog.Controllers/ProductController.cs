@@ -109,6 +109,36 @@ namespace HKBlog.Controllers
             }
             return products;
         }
+        public async Task<bool> AddDispatchedProducts(DispatchProduct product)
+        {
+            string key = JsonConvert.SerializeObject(product.Id);
+            string value = JsonConvert.SerializeObject(product);
+            bool isAdded = await database.Create("DispatchProduct", key, value);
+            return isAdded;
+        }
+        public async Task<List<DispatchProduct>> GetDispatchedProducts()
+        {
+            List<DispatchProduct> products = new List<DispatchProduct>();
+            var data = await database.ReadAll("DispatchProduct");
+            if (data != null && data.Count() > 0)
+            {
+                foreach (var product in data)
+                {
+                    var p = JsonConvert.DeserializeObject<DispatchProduct>(product.Value);
+                    if (p != null)
+                    {
+                        products.Add(p);
+                    }
+                }
+            }
+            return products;
+        }
+        public async Task<bool> DeleteDispatchedProduct(string id)
+        {
+            var key = JsonConvert.SerializeObject(id);
+            var isDeleted = await database.Delete("DispatchProduct", key);
+            return isDeleted;
+        }
         public async Task<bool> DeleteProduct(string id)
         {
             var key = JsonConvert.SerializeObject(id);

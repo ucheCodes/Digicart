@@ -11,6 +11,9 @@ namespace HKBlog.Controllers
         Task<Product> GetProduct(string id);
         Task<List<Product>> GetProducts();
         Task<bool> AddPaystackKey(Dictionary<string, string> keys);
+        Task<bool> AddDispatchedProducts(DispatchProduct product);
+        Task<List<DispatchProduct>> GetDispatchedProducts();
+        Task<bool> DeleteDispatchedProduct(string id);
         Task<Dictionary<string, string>> GetPaystackKeys();
     }
 }

@@ -33,5 +33,6 @@ namespace HKBlog.States
         void SetPaystackAuthenticationUrl(bool key, string value);
         void AddProjectName(string name);
         void UpdateWalletsInformation(List<Wallet> wallets, List<AccountNotification> notifs);
+        void UpdateDispatchedProducts(List<DispatchProduct> products);
     }
 }
