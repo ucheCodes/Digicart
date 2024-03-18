@@ -1,0 +1,101 @@
+﻿@inject IStore store
+@inject IProductController productController
+@inject IOrderController orderController
+
+<section class="dynamic-table">
+    <div class="table-header">
+        <h1 class="heading">Product Sales</h1>
+    </div>
+    <div class="table scanty">
+        <div class="table-body">
+            <table>
+                <thead>
+                    <tr>
+                        <th>S/N</th>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Total_Quantity</th>
+                        <th>Quantity_Sold</th>
+                        <th>Quantity_Remain</th>
+                        <th>Image</th>
+                        @if (store.State().ActiveUser.User.IsAdmin)
+                        {
+                            <th>Vendor Name</th>
+                            <th>Email</th>
+                            <th>Mobile</th>
+                            <th>Image</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var d in dispatchedProducts)
+                    {
+                        @if (d.VendorId == store.State().ActiveUser.User.Id || store.State().ActiveUser.User.IsAdmin)
+                        {
+                            var vendor = store.State().Users.Data.First(x => x.Id.Equals(d.VendorId));
+                            <tr>
+                                <td>@count</td>
+                                <td>@d.Product.Name</td>
+                                <td>@d.Product.Price</td>
+                                <td>@d.Quantity</td>
+                                <td>0</td>
+                                <td>01</td>
+                                <td><img class="table-img" src="@d.Product.Filepath" alt="No img" /></td>
+                                @if (store.State().ActiveUser.User.IsAdmin && vendor != null)
+                                {
+                                    <td>@vendor.Username</td>
+                                    <td>@vendor.Email</td>
+                                    <td>@vendor.Mobile</td>
+                                    <td><img class="table-img" src="@vendor.Filepath" alt="img" /></td>
+                                }
+                            </tr>
+                            count++;
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+@code {
+    List<User> vendors = new();
+    List<NewOrder> newOrders = new();
+    List<DispatchProduct> dispatchedProducts = new();
+    int count = 1;
+    protected override void OnInitialized()
+    {
+        GetDispatchedProducts();
+        // vendors = store.State().Users.Data.Where(u => u.IsVendor).ToList();
+    }
+    public async void GetAllNewOrders()
+    {
+        if (store.State().NewOrders.Data.Count > 0)
+        {
+            newOrders = store.State().NewOrders.Data.ToList();
+        }
+        else
+        {
+            newOrders = (await orderController.GetAllNewOrdersForEasyLifeUpdate()).OrderByDescending(x => x.Date).ToList();
+            store.UpdateNewOrders(newOrders);
+        }
+       // var m = newOrders.GroupBy(n => new { n.ApprovedBy})
+    }
+    public void GetDispatchedProducts()
+    {
+        List<DispatchProduct> dp = new();
+        if (store.State().Dispatched.Products.Count > 0)
+        {
+            dp = store.State().Dispatched.Products.ToList();
+        }
+        else
+        {
+            dp = productController.GetDispatchedProducts().Result;
+            store.UpdateDispatchedProducts(dp);
+        }
+        dispatchedProducts = dp
+       .GroupBy(p => new { p.Product.Id, p.VendorId})
+       .Select(g => new DispatchProduct { Id = g.Key.Id, VendorId = g.Key.VendorId, AdminId = g.First().AdminId, Quantity = g.Sum(p => p.Quantity), Product = g.First().Product, Date = g.First().Date }).ToList();
+       //order by date descending
+    }
+}

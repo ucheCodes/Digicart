@@ -1,0 +1,176 @@
+﻿@inject IStore store
+@inject IProductController productController
+@inject SignalRService signalR
+
+<section class="dynamic-table">
+    <div class="table-header">
+        <h1 class="heading">Products Dispatched to Vendors</h1>
+    </div>
+    <div class="table @tableSizeClass">
+        <div class="table-body">
+            <table>
+                <thead>
+                    <tr>
+                        <th>S/N</th>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Date</th>
+                        <th>Approved?</th>
+                        <th>Image</th>
+                        <th>Modify</th>
+                        @if (store.State().ActiveUser.User.IsAdmin)
+                        {
+                            <th>Vendor Name</th>
+                            <th>Email</th>
+                            <th>Mobile</th>
+                            <th>Image</th>
+                            <th>Delete</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var d in dispatchedProducts)
+                    {
+                        @if (d.VendorId == store.State().ActiveUser.User.Id || store.State().ActiveUser.User.IsAdmin)
+                        {
+                            var vendor = store.State().Users.Data.First(x => x.Id.Equals(d.VendorId));
+                            <tr>
+                                <td>@count</td>
+                                <td>@d.Product.Name</td>
+                                <td>@d.Product.Price</td>
+                                <td>@d.Quantity</td>
+                                <td>@d.Date.ToString("dd/MM/yyyy")</td>
+                                @if (d.DispatchStatus == OrderStatus.Approved)
+                                {
+                                    <td class="icon"><i class="fas fa-check log"></i></td>
+                                }
+                                else
+                                {
+                                    <td class="icon"><i class="fas fa-x error"></i></td>
+                                }
+                                <td><img class="table-img" src="@d.Product.Filepath" alt="No img" /></td>
+                                @if (d.DispatchStatus.Equals(OrderStatus.Approved) && d.VendorId == store.State().ActiveUser.User.Id)
+                                {
+                                    <td @onclick="(() => ModifyDispatch(d))" class="yellow cursor-pointer">Cancel</td>
+                                }
+                                else if ((d.DispatchStatus.Equals(OrderStatus.Pending) || d.DispatchStatus.Equals(OrderStatus.Cancelled)) && d.VendorId == store.State().ActiveUser.User.Id)
+                                {
+                                    <td @onclick="(() => ModifyDispatch(d))" class="error cursor-pointer">Approve</td>
+                                }
+                                else
+                                {
+                                    <td class="yellow">No Access</td>
+                                }
+                                @if (store.State().ActiveUser.User.IsAdmin && vendor != null)
+                                {
+                                    <td>@vendor.Username</td>
+                                    <td>@vendor.Email</td>
+                                    <td>@vendor.Mobile</td>
+                                    <td><img class="table-img" src="@vendor.Filepath" alt="img" /></td>
+                                    <td @onclick="(() => DeleteDispatch(d.Id))" class="icon"><i class="fas fa-trash error"></i></td>
+                                }
+                            </tr>
+                            count++;
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+@code {
+    List<DispatchProduct> dispatchedProducts = new();
+    string tableSizeClass = "";
+    string add = "add";
+    int count = 1;
+    public HubConnection hubConnection => signalR.HubConnection;
+    protected async override Task OnInitializedAsync()
+    {
+        if (store.State().Dispatched.Products.Count > 0)
+        {
+            dispatchedProducts = store.State().Dispatched.Products.OrderBy(p => p.VendorId).OrderByDescending(x => x.Date).ToList();
+        }
+        else
+        {
+            var _dispatchedProducts = await productController.GetDispatchedProducts();
+            dispatchedProducts = _dispatchedProducts.OrderBy(p => p.VendorId).OrderByDescending(x => x.Date).ToList();
+            store.UpdateDispatchedProducts(dispatchedProducts);
+        }
+        signalR.HubConnection.On<List<DispatchProduct>>("NewDispatchedProducts", OnNewDispatchedProducts);
+        signalR.HubConnection.On<DispatchProduct, string>("ModifyDispatchedProducts", OnModifyDispatchedProducts);
+    }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (dispatchedProducts.Count == 0 && store.State().Dispatched.Products.Count > 0)
+        {
+            dispatchedProducts = store.State().Dispatched.Products.OrderBy(p => p.VendorId).OrderByDescending(x => x.Date).ToList();
+        }
+        count = 1;
+        InitializeTableSize();
+    }
+    public void InitializeTableSize()
+    {
+        if (dispatchedProducts.Count > 5)
+        {
+            tableSizeClass = "large";
+        }
+        else
+        {
+            tableSizeClass = "scanty";
+        }
+    }
+    public void OnModifyDispatchedProducts(DispatchProduct product, string operation)
+    {
+        dispatchedProducts = store.State().Dispatched.Products.OrderBy(p => p.VendorId).OrderByDescending(x => x.Date).ToList();
+        InitializeTableSize();
+        InvokeAsync(StateHasChanged);
+    }
+    public void OnNewDispatchedProducts(List<DispatchProduct> products)
+    {
+        if (products[0].VendorId == store.State().ActiveUser.User.Id)
+        {
+            dispatchedProducts.InsertRange(0,products);
+            InitializeTableSize();
+            InvokeAsync(StateHasChanged);
+        }
+    }
+    private async void DeleteDispatch(string id)
+    {
+        try
+        {
+            var del = await productController.DeleteDispatchedProduct(id);
+            if (del)
+            {
+                DispatchProduct d = store.State().Dispatched.Products.First(x => x.Id.Equals(id));
+                await signalR.HubConnection.SendAsync("ModifyDispatchedProducts", d, "delete");
+            }
+        }
+        catch (Exception)
+        {
+        }
+    }
+    public async void ModifyDispatch(DispatchProduct d)
+    {
+        try
+        {
+            if (d.DispatchStatus.Equals(OrderStatus.Approved))
+            {
+                d.DispatchStatus = OrderStatus.Cancelled;
+            }
+            else
+            {
+                d.DispatchStatus = OrderStatus.Approved;
+            }
+            var isAdded = productController.AddDispatchedProducts(d).Result;
+            if (isAdded)
+            {
+                await signalR.HubConnection.SendAsync("ModifyDispatchedProducts", d, add);
+            }
+        }
+        catch (Exception)
+        {
+        }
+    }
+}
