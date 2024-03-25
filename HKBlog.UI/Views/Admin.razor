@@ -98,7 +98,7 @@
     List<AccountNotification> allWalletNotifications = new();
     public HubConnection hubConnection => signalR.HubConnection;
     protected override async Task OnInitializedAsync()
-    {// work in progress
+    {
         allWallets = store.State().AllWalletsInfo.Wallets.OrderBy(x => x.WalletId).ToList();
         walletNotifications = store.State().AllWalletsInfo.AccountNotifications.ToList();
         if (store.State().NewOrders.Data.Count == 0)
@@ -150,7 +150,7 @@
             selectedWallet = new();
         }
     }
-    private async void ModifyFunds()
+    private void ModifyFunds()
     {
         try
         {
@@ -177,12 +177,11 @@
                     if (isSaved.Result && walletAction != "")
                     {
                         AccountNotification notif = AddFundNotification(selectedWallet.WalletId, previousBalance, creditAmount, selectedWallet.Balance, creditType);
-                        message = "Fund Modified Successfully!!!";
-                        msgClass = "log";
-                        await signalR.HubConnection.SendAsync("AddNewWalletUpdate", selectedWallet, notif);
-                        await mailService.Send("peters.soft.network@gmail.com", user.Email, $"{store.State().Project.Name} wallet Funds Activation", $"Your {store.State().Project.Name} wallet {selectedWallet.WalletId} is successfully {creditType}ed with {naira}{creditAmount.ToString("N0")} on {DateTime.Now.ToString("MMM dd, yyyy")} {DateTime.Now.ToString("hh:mm tt")}. Thanks for keeping us in business.");
+                        ModifyFundsAsyncHelper(notif,user.Email, selectedWallet,creditType);
                         previousBalance = 0;
                         creditAmount = 0;
+                        message = "Fund Modified Successfully!!!";
+                        msgClass = "log";
                         selectedWallet = new();
                         user = new();
                     }
@@ -197,6 +196,11 @@
         catch (Exception)
         {
         }
+    }
+    private async void ModifyFundsAsyncHelper(AccountNotification notif, string userEmail, Wallet selectedWallet, CreditType creditType)
+    {
+        await Task.Run(() => signalR.HubConnection.SendAsync("AddNewWalletUpdate", selectedWallet, notif));
+        await Task.Run(() => mailService.Send("peters.soft.network@gmail.com", userEmail, $"{store.State().Project.Name} wallet Funds Activation", $"Your {store.State().Project.Name} wallet {selectedWallet.WalletId} is successfully {creditType}ed with {naira}{creditAmount.ToString("N0")} on {DateTime.Now.ToString("MMM dd, yyyy")} {DateTime.Now.ToString("hh:mm tt")}. Thanks for keeping us in business."));
     }
     private AccountNotification AddFundNotification(string walletId, double previousBalance, double creditAmount, double currentBalance, CreditType creditType)
     {

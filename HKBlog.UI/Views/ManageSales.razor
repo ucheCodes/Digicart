@@ -9,64 +9,132 @@
     <div class="table scanty">
         <div class="table-body">
             <table>
-                <thead>
-                    <tr>
-                        <th>S/N</th>
-                        <th>Product</th>
-                        <th>Price</th>
-                        <th>Total_Quantity</th>
-                        <th>Quantity_Sold</th>
-                        <th>Quantity_Remain</th>
-                        <th>Image</th>
-                        @if (store.State().ActiveUser.User.IsAdmin)
-                        {
-                            <th>Vendor Name</th>
+                @if (showOrders)
+                {
+                    <thead>
+                        <tr>
+                            <th>S/N</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Payment Id</th>
+                            <th>Payment Channel</th>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Net_Sum</th>
+                            <th>Image</th>
+                            <th>Customer</th>
                             <th>Email</th>
                             <th>Mobile</th>
-                            <th>Image</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var d in dispatchedProducts)
-                    {
-                        @if (d.VendorId == store.State().ActiveUser.User.Id || store.State().ActiveUser.User.IsAdmin)
+                            <th>Back</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ord in productOrdered)
                         {
-                            var vendor = store.State().Users.Data.First(x => x.Id.Equals(d.VendorId));
+                            User user = store.State().Users.Data.First(u => u.Id.Equals(ord.UserId));
                             <tr>
                                 <td>@count</td>
-                                <td>@d.Product.Name</td>
-                                <td>@d.Product.Price</td>
-                                <td>@d.Quantity</td>
-                                <td>0</td>
-                                <td>01</td>
-                                <td><img class="table-img" src="@d.Product.Filepath" alt="No img" /></td>
-                                @if (store.State().ActiveUser.User.IsAdmin && vendor != null)
+                                <td>@ord.Date.ToString("dd/MM/yyyy")</td>
+                                <td>@ord.Date.ToString("hh:mm_tt")</td>
+                                <td>@ord.PaymentId</td>
+                                <td>@ord.PaymentChannel</td>
+                                <td>@product.Name</td>
+                                <td><b>@naira@product.Price</b></td>
+                                @if (productQty.ContainsKey(ord.PaymentId))
                                 {
-                                    <td>@vendor.Username</td>
-                                    <td>@vendor.Email</td>
-                                    <td>@vendor.Mobile</td>
-                                    <td><img class="table-img" src="@vendor.Filepath" alt="img" /></td>
+                                    <td><b>@productQty[ord.PaymentId]</b></td>
                                 }
+                                else
+                                {
+                                    <td>#00#</td>
+                                }
+                                <td><b>@naira@ord.Price.ToString("N0")</b></td>
+                                <td><img class="table-img" src="@product.Filepath" alt="No img" /></td>
+                                <td>@user.Username</td>
+                                <td>@user.Email</td>
+                                <td>@user.Mobile</td>
+                                <td class="icon" @onclick="(() => {showOrders = false; product = new(); productQty = new(); productOrdered = new(); count = 1;})"><i class="fas fa-arrow-left"></i></td>
                             </tr>
                             count++;
                         }
-                    }
-                </tbody>
+                    </tbody>
+                }
+                else
+                {
+                    <thead>
+                        <tr>
+                            <th>S/N</th>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Total_Quantity</th>
+                            <th>Quantity_Sold</th>
+                            <th>Quantity_Remain</th>
+                            <th>Image</th>
+                            @if (store.State().ActiveUser.User.IsAdmin)
+                            {
+                                <th>Vendor Name</th>
+                                <th>Email</th>
+                                <th>Mobile</th>
+                                <th>Image</th>
+                            }
+                            <th>View_Orders</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in dispatchedProducts)
+                        {
+                            @if (d.VendorId == store.State().ActiveUser.User.Id || store.State().ActiveUser.User.IsAdmin)
+                            {
+                                //Dictionary<string, int> quantitySold = GetQuantitySold(d.VendorId);//alternative code for getting quantity sold
+                                int qtySold = getQuantitySold(d.VendorId, d.Id);
+                                var vendor = store.State().Users.Data.First(x => x.Id.Equals(d.VendorId));
+                                <tr>
+                                    <td>@count</td>
+                                    <td>@d.Product.Name</td>
+                                    <td>@naira@d.Product.Price</td>
+                                    <td><b>@d.Quantity</b></td>
+                                    <td class="error"><b>@qtySold</b></td>
+                                    <td class="log"><b>@(d.Quantity - qtySold)</b></td>
+                                    <td><img class="table-img" src="@d.Product.Filepath" alt="No img" /></td>
+                                    @if (store.State().ActiveUser.User.IsAdmin && vendor != null)
+                                    {
+                                        <td>@vendor.Username</td>
+                                        <td>@vendor.Email</td>
+                                        <td>@vendor.Mobile</td>
+                                        <td><img class="table-img" src="@vendor.Filepath" alt="img" /></td>
+                                    }
+                                    @if (qtySold > 0)
+                                    {
+                                        <td @onclick="(() => ShowOrders(d.VendorId, d.Id))" class="icon"><i class="fas fa-shopping-basket"></i></td>
+                                    }
+                                </tr>
+                                count++;
+                            }
+                        }
+                    </tbody>
+                }
             </table>
         </div>
     </div>
 </section>
 
+
+    
 @code {
     List<User> vendors = new();
     List<NewOrder> newOrders = new();
+    List<NewOrder> productOrdered = new();
     List<DispatchProduct> dispatchedProducts = new();
+    Product product = new();
+    Dictionary<string, int> productQty = new();
+    bool showOrders = false;
+    char naira = (char)8358;
     int count = 1;
     protected override void OnInitialized()
     {
         GetDispatchedProducts();
-        // vendors = store.State().Users.Data.Where(u => u.IsVendor).ToList();
+        GetAllNewOrders();
     }
     public async void GetAllNewOrders()
     {
@@ -79,7 +147,6 @@
             newOrders = (await orderController.GetAllNewOrdersForEasyLifeUpdate()).OrderByDescending(x => x.Date).ToList();
             store.UpdateNewOrders(newOrders);
         }
-       // var m = newOrders.GroupBy(n => new { n.ApprovedBy})
     }
     public void GetDispatchedProducts()
     {
@@ -94,8 +161,62 @@
             store.UpdateDispatchedProducts(dp);
         }
         dispatchedProducts = dp
-       .GroupBy(p => new { p.Product.Id, p.VendorId})
-       .Select(g => new DispatchProduct { Id = g.Key.Id, VendorId = g.Key.VendorId, AdminId = g.First().AdminId, Quantity = g.Sum(p => p.Quantity), Product = g.First().Product, Date = g.First().Date }).ToList();
-       //order by date descending
+       .GroupBy(p => new { p.Product.Id, p.VendorId })
+       .Select(g => new DispatchProduct { Id = g.Key.Id, VendorId = g.Key.VendorId, AdminId = g.First().AdminId, Quantity = g.Sum(p => p.Quantity), Product = g.First().Product, Date = g.First().Date })
+       .OrderBy(x => x.Product.Name).ToList();
+    }
+    public Dictionary<string, int> GetQuantitySold(string vendorId)
+    {
+        Dictionary<string, int> qtyDict = new Dictionary<string, int>();
+        List<NewOrder> orders = newOrders.Where(x => x.ApprovedBy.Equals(vendorId) && x.Status.Equals(OrderStatus.Approved)).ToList();
+        foreach (var item in orders)
+        {
+            foreach (var p in item.Products)
+            {
+                if (qtyDict.ContainsKey(p.Id))
+                {
+                    qtyDict[p.Id] = qtyDict[p.Id] += p.Quantity;
+                }
+                else
+                {
+                    qtyDict.Add(p.Id, p.Quantity);
+                }
+            }
+        }
+        return qtyDict;
+    }
+    public int getQuantitySold(string vendorId, string productId)
+    {
+        int qty = 0;
+        List<NewOrder> orders = newOrders.Where(x => x.ApprovedBy.Equals(vendorId) && x.Status.Equals(OrderStatus.Approved)).ToList();
+        foreach (var item in orders)
+        {
+            foreach (var p in item.Products)
+            {
+                if (p.Id.Equals(productId))
+                {
+                    qty += p.Quantity;
+                }
+            }
+        }
+        return qty;
+    }
+    private void ShowOrders(string vendorId, string productId)
+    {
+        showOrders = true;
+        count = 1;
+        product = store.State().ProductItems.Products.First(p => p.Id.Equals(productId));
+        List<NewOrder> orders = newOrders.Where(x => x.ApprovedBy.Equals(vendorId) && x.Status.Equals(OrderStatus.Approved)).ToList();
+        foreach (var item in orders)
+        {
+            foreach (var p in item.Products)
+            {
+                if (p.Id.Equals(productId) && !productQty.ContainsKey(item.PaymentId))
+                {
+                    productQty.Add(item.PaymentId, p.Quantity);
+                    productOrdered.Add(item);
+                }
+            }
+        }
     }
 }

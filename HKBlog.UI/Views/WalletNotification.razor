@@ -21,14 +21,14 @@
                     <thead>
                         <tr>
                             <th>S/N</th>
+                            <th>Date</th>
+                            <th>Time</th>
                             <th>Payment Id</th>
                             <th>Previous Balance</th>
                             <th>Transaction Amount</th>
                             <th>Current Balance</th>
                             <th>Credit Type</th>
                             <th>Section</th>
-                            <th>Date</th>
-                            <th>Time</th>
                             @if (IsFromAdmin)
                             {
                                 <th>User</th>
@@ -41,10 +41,12 @@
                         {
                             <tr>
                                 <td>@count</td>
+                                <td>@n.Date.ToString("dd/MM/yyyy")</td>
+                                <td>@n.Date.ToString("hh:mm_tt")</td>
                                 <td>@n.PaymentId</td>
-                                <td>@n.PreviousBalance.ToString("N0")</td>
-                                <td><b>@n.TransactionalAmount.ToString("N0")</b></td>
-                                <td>@n.CurrentBalance.ToString("N0")</td>
+                                <td>@naira@n.PreviousBalance.ToString("N0")</td>
+                                <td><b>@naira@n.TransactionalAmount.ToString("N0")</b></td>
+                                <td>@naira@n.CurrentBalance.ToString("N0")</td>
                                 @if (n.CreditType.Equals(CreditType.credit))
                                 {
                                     <td class="log">@n.CreditType</td>
@@ -58,8 +60,6 @@
                                     <td class="yellow">@n.CreditType</td>
                                 }
                                 <td>@n.TransactionSection</td>
-                                <td>@n.Date.ToString("dd/MM/yyyy")</td>
-                                <td>@n.Date.ToString("hh : mm tt")</td>
                                 @if (IsFromAdmin)
                                 {
                                     <td @onclick="(() => ViewUser(n.UserId))" class="icon"><i class="fas fa-user-alt"></i></td>
@@ -106,6 +106,7 @@
     string viewTable = "notify";
     string notifyString = "notify";
     string largeString = "large";
+    char naira = (char)8358;
     List<Product> selectedProducts = new();
     User user = new();
     List<User> users = new();
@@ -122,7 +123,7 @@
             users = userController.ReadAllUsers().Result;
             store.UpdateUsersList(users);
         }
-        if (walletNotifications.Count > 4)
+        if (walletNotifications.Count > 9)
             tableSizeClass = "large";
     }
     protected override void OnAfterRender(bool firstRender)

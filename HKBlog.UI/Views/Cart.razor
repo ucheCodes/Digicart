@@ -57,10 +57,18 @@
 
 			<select @onchange="ModifyPaymentChannel" class="input">
 				<option value="null">Select Payment Channel</option>
-				<option value="cash">Pay Cash on Delivery</option>
 				<option value="paystack">Pay via Paystack</option>
 				<option value="wallet">Pay via Wallet</option>
+				@* <option value="cash">Pay Cash on Delivery</option> *@
 			 </select>
+			 </div>
+			 <div>
+			<select maxlength="40" @bind="center" type="text" placeholder="choose center" class="input">
+				@foreach (var c in Centers.states)
+				{
+					<option value="@c">@c</option>
+				}
+			</select>
 			 </div>
 			<div class="coloured">
 				<small class="log">Total : @naira @store.State().CartTotal.Total.ToString("N0")</small><br>
@@ -89,6 +97,7 @@ else
 @code {
 	char naira = (char)8358;
 	string message = "";
+	string center = "Choose nearest delivery Location";
 	string msg = "";
 	string msgClass = "error";
 	string cartMsg = "Empty Cart";
@@ -287,6 +296,7 @@ else
 				UserId = store.State().ActiveUser.User.Id,
 				Price = store.State().CartTotal.Total,
 				PaymentStatus = p,
+				Location = center,
 				PaymentChannel = paymentChannel
 			};
 		var isAdded = await orderController.AddNewOrderForEasyLifeUpdate(newOrder);

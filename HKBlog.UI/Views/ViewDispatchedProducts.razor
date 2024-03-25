@@ -6,16 +6,16 @@
     <div class="table-header">
         <h1 class="heading">Products Dispatched to Vendors</h1>
     </div>
-    <div class="table @tableSizeClass">
+    <div class="table scanty">
         <div class="table-body">
             <table>
                 <thead>
                     <tr>
                         <th>S/N</th>
+                        <th>Date</th>
                         <th>Product</th>
                         <th>Price</th>
                         <th>Quantity</th>
-                        <th>Date</th>
                         <th>Approved?</th>
                         <th>Image</th>
                         <th>Modify</th>
@@ -37,10 +37,10 @@
                             var vendor = store.State().Users.Data.First(x => x.Id.Equals(d.VendorId));
                             <tr>
                                 <td>@count</td>
-                                <td>@d.Product.Name</td>
-                                <td>@d.Product.Price</td>
-                                <td>@d.Quantity</td>
                                 <td>@d.Date.ToString("dd/MM/yyyy")</td>
+                                <td>@d.Product.Name</td>
+                                <td>@naira@d.Product.Price</td>
+                                <td>@d.Quantity</td>
                                 @if (d.DispatchStatus == OrderStatus.Approved)
                                 {
                                     <td class="icon"><i class="fas fa-check log"></i></td>
@@ -84,6 +84,7 @@
     List<DispatchProduct> dispatchedProducts = new();
     string tableSizeClass = "";
     string add = "add";
+    char naira = (char)8358;
     int count = 1;
     public HubConnection hubConnection => signalR.HubConnection;
     protected async override Task OnInitializedAsync()
@@ -112,7 +113,7 @@
     }
     public void InitializeTableSize()
     {
-        if (dispatchedProducts.Count > 5)
+        if (dispatchedProducts.Count > 9)
         {
             tableSizeClass = "large";
         }

@@ -18,7 +18,8 @@ namespace HKBlog.Models
         public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.None;
         public double Price { get; set; }
         public bool IsViewed { get; set; } = false;
-        public string  ApprovedBy { get; set; } = string.Empty; 
+        public string  ApprovedBy { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
     }
     public enum PaymentStatus
     {

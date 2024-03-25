@@ -86,7 +86,7 @@
                         <tr>
                             <td>@count</td>
                             <td>@product.Name</td>
-                            <td>@product.Price</td>
+                            <td>@naira@product.Price</td>
                         @if (productQty.ContainsKey(product.Id))
                         {
                             <td><input class="number" typeof="number" @bind="productQty[product.Id]"></td>
@@ -127,6 +127,7 @@
     string tableSizeClass = "";
     string message = "";
     string msgClass = "";
+    char naira = (char)8358;
     List<string> msgList = new();
     int count = 1;
     User selectedVendor = new();

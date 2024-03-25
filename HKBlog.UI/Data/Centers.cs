@@ -9,7 +9,7 @@
         };
         public static List<string> states { get; } = new List<string>
         {
-            "Choose nearest Location",
+            "Choose nearest delivery Location",
             "Abia", "Umuahia",
             "Adamawa", "Yola",
             "Akwa Ibom", "Uyo",
