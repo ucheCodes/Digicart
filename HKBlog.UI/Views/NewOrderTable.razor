@@ -168,9 +168,9 @@
                                 <td>@user.Username</td>
                                 <td>@user.Email</td>
                                 <td>@user.Mobile</td>
-                                <td>@user.Center</td>
+                                <td>@activeCenter</td>
                                 <td><img class="table-img" src="@user.Filepath" alt="No img" /></td>
-                            <td @onclick="(() => {viewTable = orderString;InitializeTableClassSize(); })"><button class="icon">Back &larr;</button></td>
+                            <td @onclick="(() => {viewTable = orderString;InitializeTableClassSize(); activeCenter = string.Empty; })"><button class="icon">Back &larr;</button></td>
                             </tr>
                     </tbody>
                 }
@@ -185,6 +185,7 @@
     string largeString = "large";
     string orderString = "orders";
     string viewTable = "orders";
+    string activeCenter = "";
     string tableSizeClass = "scanty";
     User user = new();
     List<User> users = new();
@@ -286,7 +287,11 @@
         user = users.Find(u => u.Id.Equals(userId)) ?? new();
         if (center != "" && center != "Choose nearest delivery Location")
         {
-            user.Center = center; 
+            activeCenter = center; 
+        }
+        else
+        {
+            activeCenter = user.Center;
         }
         tableSizeClass = "scanty";
     }
